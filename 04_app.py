@@ -392,8 +392,6 @@ def get_rlvt_data(
     # Re-sort for display
     df_out.sort_values(by=[metric], inplace=True)
   
-  #print(df_out)
-  
   return df_out, curr_date.date()
 
 """
