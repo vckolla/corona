@@ -537,7 +537,6 @@ def upd_us_fig_cb(
   us_metric,
   us_metric_ver
 ):
-  #print("US_CB", us_metric, us_metric_ver)
   comp = upd_us_fig(us_metric, us_metric_ver)
   return comp
 
@@ -552,14 +551,13 @@ def upd_state_fig_cb(
   state,
   state_metric
 ):
-  #print("S_CB", state, state_metric)
   comp = upd_state_fig(state, state_metric)
 
   return comp
 
 @app.callback(
   [
-     Output('tab_2_fig', 'figure'),
+     Output('tab_2_fig',      'figure'),
      Output('town_metric_dd', 'options'),
   ],
   [
@@ -575,7 +573,6 @@ def upd_town_fig_cb(
   town_metric,
   town_metric_ver,
 ):
-  #print("Town_CB", state, town, town_metric)
   comp    =  upd_town_fig(state, town, town_metric, town_metric_ver)
   df_town = df[df['state'] == state]
   towns   = df_town['town'].unique()
