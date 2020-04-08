@@ -42,11 +42,6 @@ rcnt_dt    = df['date'].max().date()
 states     = df['state'].unique()
 towns      = df['town'].unique()
 
-def_metric = 'incidence'
-def_ver    = 'state'
-def_state  = 'Massachusetts'
-def_town   = 'Middlesex, Massachusetts, US'
-
 df_rcnt    = df[df['date'] == rcnt_dt]
 
 """
@@ -56,9 +51,9 @@ df_rcnt    = df[df['date'] == rcnt_dt]
 """
 tab_dict = {
   'tab_smry': f"Summary",
-  'tab_0': f"US 'High Risk'",
-  'tab_1': f"State 'High Risk'",
-  'tab_2': f"Over time trends"
+  'tab_0':    f"US 'High Risk'",
+  'tab_1':    f"State 'High Risk'",
+  'tab_2':    f"Over time trends"
 }
 
 dim_desc = [
@@ -107,12 +102,34 @@ state_measure_cols = [
   'deaths',
 ]
 
-dim_dict = dict(zip(dim_cols, dim_desc))
-measures_dict = dict(zip(measure_cols, measure_desc))
-
+dim_dict          = dict(zip(dim_cols, dim_desc))
+measures_dict     = dict(zip(measure_cols, measure_desc))
 town_measure_cols = measure_cols
-cols = dim_cols + measure_cols
+cols              = dim_cols + measure_cols
 
+"""
+# ======================================================================
+# Set defaults
+# ======================================================================
+"""
+def_metric        = 'incidence'
+def_ver           = 'state'
+def_state         = 'Massachusetts'
+def_town          = 'Middlesex, Massachusetts, US'
+
+state             = def_state
+town              = def_town
+us_metric         = def_metric
+us_metric_ver     = def_ver
+state_metric      = def_metric
+town_metric       = def_metric
+town_metric_ver   = def_ver
+
+"""
+# ======================================================================
+# Convert to css. Styling of html div sections
+# ======================================================================
+"""
 sel_left = {
   'width':          '64%',
   'display':        'inline-block',
@@ -130,52 +147,45 @@ sel_right = {
 
 """
 # ======================================================================
-# Prep main layout
+# Define tabs - summary
 # ======================================================================
 """
-def get_tabs():
-  tabs = []
-
-  state           = def_state
-  town            = def_town
-
-  us_metric       = def_metric
-  us_metric_ver   = def_ver
-  state_metric    = def_metric
-  town_metric     = def_metric
-  town_metric_ver = def_ver
-
-  # Define tab_smry
+def get_smry_tab():
   tab   = 'tab_smry'
   label = tab_dict[tab]
   tab_smry = dcc.Tab(
-    label = label,
-    value = tab,
-    children = [
-      dcc.Markdown(f"""
-      # US COVID 19 Tracker (as of {rcnt_dt})
-      ---
-      >  | Metric | Value |
-      >  | ------ | ------|
-      >  | States analyzed: | **{len(states)}** |
-      >  | Towns analyzed:  | **{len(towns):,.0f}**  |
-      >  | Incidents:       | **{df_rcnt['incidence'].sum():,.0f}**  |
-      >  | Incidents increase from prev day: | **{df_rcnt['incidence_inc'].sum():,.0f}**  |
-      >  | Deaths:          | **{df_rcnt['deaths'].sum():,.0f}**  |
-      ---
-      """
-      )
-    ]
-  )
-  tabs.append(tab_smry)
+      label = label,
+      value = tab,
+      children = [
+        dcc.Markdown(f"""
+        # US COVID 19 Tracker (as of {rcnt_dt})
+        ---
+        >  | Metric | Value |
+        >  | ------ | ------|
+        >  | States analyzed: | **{len(states)}** |
+        >  | Towns analyzed:  | **{len(towns):,.0f}**  |
+        >  | Incidents:       | **{df_rcnt['incidence'].sum():,.0f}**  |
+        >  | Incidents increase from prev day: | **{df_rcnt['incidence_inc'].sum():,.0f}**  |
+        >  | Deaths:          | **{df_rcnt['deaths'].sum():,.0f}**  |
+        ---
+        """
+        )
+      ]
+    )
+  return tab_smry
 
-  # Define tab_0
+"""
+# ======================================================================
+# Define tabs - US
+# ======================================================================
+"""
+def get_us_tab():
   tab    = 'tab_0'
   label  = tab_dict[tab]
   rb_id  = 'us_metric_rb'
   rb2_id = 'us_metric_ver_rb'
   fig_id = f"{tab}_fig"
-
+  
   tab_0 = dcc.Tab(
     label = label,
     value = tab,
@@ -214,9 +224,15 @@ def get_tabs():
       )
     ]
   )
-  tabs.append(tab_0)
+  
+  return tab_0
 
-  # Define tab_1
+"""
+# ======================================================================
+# Define tabs - State
+# ======================================================================
+"""
+def get_state_tab():
   tab    = 'tab_1'
   label  = tab_dict[tab]
   dd_id  = 'state_metric_dd'
@@ -262,9 +278,15 @@ def get_tabs():
         )
     ]
   )
-  tabs.append(tab_1)
+      
+  return tab_1
 
-  # Define tab_2
+"""
+# ======================================================================
+# Define tabs - County
+# ======================================================================
+"""
+def get_county_tab():
   tab    = 'tab_2'
   label  = tab_dict[tab]
   dd_id  = 'town_metric_dd'
@@ -319,7 +341,20 @@ def get_tabs():
         ], style = sel_right,
     )]
   )
-  tabs.append(tab_2)
+  return tab_2  
+
+"""
+# ======================================================================
+# Prep main layout
+# ======================================================================
+"""
+def get_tabs():
+  tabs = []
+
+  tabs.append(get_smry_tab())
+  tabs.append(get_us_tab())
+  tabs.append(get_state_tab())
+  tabs.append(get_county_tab())
 
   return tabs
 
@@ -411,7 +446,7 @@ def get_trend(x, y, x_title, y_title):
       'font':          {'family':'Century Gothic', 'size':'14', 'color':'black'},
       'clickmode':     'event+select',
       'hovermode':     'x unified',
-      'hoverlabel':    {'bgcolor':'white', 'font_size':'12'},
+      'hoverlabel':    {'bgcolor':'white', 'font_size':'14'},
       'showlegend':    True,
       'legend_orientation': 'h',
       'legend':        dict(x=0, y=1.1),
@@ -513,7 +548,6 @@ def upd_us_fig(
       us_metric, us_metric_ver)
 
   x_top   = df_us[us_metric]
-  #y_top   = df_us['town']
   y_top   = df_us[us_metric_ver]
   x_title = f"Cumulative {us_metric.upper()} as of {curr_date}"
   y_title = f""
@@ -572,8 +606,6 @@ def upd_town_fig(
   if (town_metric_ver == 'town'):
     df_town = df_town[df_town['town'] == town]
 
-  #print(df_town)
-
   x       = df_town['date']
   y       = df_town[town_metric]
   x_title = f"Date"
@@ -594,17 +626,15 @@ def upd_town_fig(
 app = dash.Dash(__name__)
 app.config.suppress_callback_exceptions = True
 app.layout = html.Div([
-
-  dcc.Tabs(id='tabs', value = 'tab_smry',
-      children=get_tabs()
-    )
-],
-style={'width': '95%'}
+    dcc.Tabs(id='tabs', value = 'tab_smry',
+        children=get_tabs()
+      )
+  ], style={'width': '95%'}
 )
 
 """
 # ======================================================================
-# Callbacks - to process input from end users
+# US fig call back
 # ======================================================================
 """
 @app.callback(
@@ -621,6 +651,11 @@ def upd_us_fig_cb(
   comp = upd_us_fig(us_metric, us_metric_ver)
   return comp
 
+"""
+# ======================================================================
+# State fig call back
+# ======================================================================
+"""
 @app.callback(
   Output('tab_1_fig', 'figure'),
   [
@@ -636,6 +671,11 @@ def upd_state_fig_cb(
 
   return comp
 
+"""
+# ======================================================================
+# County fig call back
+# ======================================================================
+"""
 @app.callback(
   [
      Output('tab_2_fig',      'figure'),
