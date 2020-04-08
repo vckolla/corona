@@ -1,0 +1,22 @@
+body {
+  font-family: "Century Gothic";
+	font-size:   10x;
+}
+
+h1, h2, h3, h4, h5, h6 {
+	color: hotpink;
+	#color: blue;
+}
+
+sel-left = {
+  width:          65%;
+  display:        inline-block;
+  vertical-align: top;
+}
+
+sel-right = {
+  width:          30%;
+  display:        inline-block;
+  vertical-align: top;
+}
+

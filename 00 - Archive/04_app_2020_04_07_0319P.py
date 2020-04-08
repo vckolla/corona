@@ -135,9 +135,9 @@ def get_tabs():
     children = [
       dcc.Markdown(f"""
       # US COVID 19 Tracker (as of {rcnt_dt})
-      
+
       ---
-      
+
       >  | Metric | Value |
       >  | ------ | ------|
       >  | States analyzed: | **{len(states)}** |
@@ -145,9 +145,9 @@ def get_tabs():
       >  | Incidents:       | **{df_rcnt['incidence'].sum():,.0f}**  |
       >  | Incidents increase from prev day: | **{df_rcnt['incidence_inc'].sum():,.0f}**  |
       >  | Deaths:         | **{df_rcnt['deaths'].sum():,.0f}**  |
-      
+
       ---
-      
+
       """
       )
     ]
@@ -174,7 +174,7 @@ def get_tabs():
         id      = rb2_id,
         options = [{'label': dim_dict[i], 'value': i} for i in ['state','town']],
         value   = 'state'
-      ),      
+      ),
       dcc.Graph(
         id     = fig_id,
         figure = upd_us_fig(us_metric, us_metric_ver)
@@ -358,7 +358,7 @@ def get_rlvt_data(
   filter_val:  the value to filter on
   """
   num_top_points = 20
-  
+
   p_str = f"""
     viz_type    = {viz_type}
     metric      = {metric}
@@ -366,35 +366,35 @@ def get_rlvt_data(
     filter_val  = {filter_val}
   """
   p_print(p_str)
-  
+
   df_out    = df[dim_cols + [metric]]
   curr_date = df_out['date'].max()
 
   if (viz_type in [ 'us'] ):
     df_out    = df_out[df_out['date'] == curr_date]
-    
+
     if (metric_ver == 'state'):
-      df_out = pd.DataFrame(df_out.groupby([metric_ver])[metric].sum())
-      df_out = df_out.reset_index()
+#      df_out = pd.DataFrame(df_out.groupby([metric_ver])[metric].sum())
+#      df_out = df_out.reset_index()
   elif (viz_type == 'state'):
     df_out    = df_out[df_out['date'] == curr_date]
     df_out = df_out[df_out['state'] == filter_val]
   elif (viz_type == 'town'):
     df_out = df_out[df_out['state'] == filter_val]
     if (metric_ver == 'state'):
-      df_out = pd.DataFrame(df_out.groupby(['date', metric_ver])[metric].sum())
-      df_out = df_out.reset_index()
+#      df_out = pd.DataFrame(df_out.groupby(['date', metric_ver])[metric].sum())
+#      df_out = df_out.reset_index()
 
   if (viz_type in [ 'us', 'state' ]):
     # get top 20 by metric
     df_out.sort_values(by=[metric], inplace=True, ascending=False)
     df_out = df_out.head(num_top_points)
-    
+
     # Re-sort for display
     df_out.sort_values(by=[metric], inplace=True)
-  
+
   #print(df_out)
-  
+
   return df_out, curr_date.date()
 
 """
@@ -418,16 +418,16 @@ def get_rlvt_data_old(
   filter_val:  the value to filter on
   """
   num_top_points = 20
-  
+
   p_str = f"""
     metric_type = {metric_type}
     metric      = {metric}
     metric_ver  = {metric_ver}
-    filter_col  = {filter_col} 
+    filter_col  = {filter_col}
     filter_val  = {filter_val}
   """
   #p_print(p_str)
-  
+
   df_out    = df[dim_cols + [metric]]
   curr_date = df_out['date'].max()
 
@@ -437,7 +437,7 @@ def get_rlvt_data_old(
   if (metric_type == 'top'):
     # Restrict date to current for US and state
     df_out    = df_out[df_out['date'] == curr_date]
-    
+
     if (metric_ver == 'state'):
       df_out = pd.DataFrame(df_out.groupby([metric_ver])[metric].sum())
       df_out = df_out.reset_index()
@@ -447,12 +447,12 @@ def get_rlvt_data_old(
     # get top 20 by metric
     df_out.sort_values(by=[metric], inplace=True, ascending=False)
     df_out = df_out.head(num_top_points)
-    
+
     # Re-sort for display
     df_out.sort_values(by=[metric], inplace=True)
-  
+
     #print(df_out)
-  
+
   return df_out, curr_date.date()
 
 """
@@ -485,7 +485,7 @@ def upd_us_fig(
   metric: The metric to update
   """
   df_us, curr_date = get_rlvt_data(
-      df, 'us', 
+      df, 'us',
       us_metric, us_metric_ver)
 
   x_top   = df_us[us_metric]
@@ -512,7 +512,7 @@ def upd_state_fig(
   state_metric: The metric to update
   """
   df_state, curr_date = get_rlvt_data(
-      df, 'state', 
+      df, 'state',
       state_metric, 'state', state)
 
   x_top   = df_state[state_metric]
@@ -542,7 +542,7 @@ def upd_town_fig(
   metric: The metric to update
   """
   df_town, curr_date  = get_rlvt_data(
-      df, 'town', town_metric, 
+      df, 'town', town_metric,
       town_metric_ver, state)
 
   if (town_metric_ver == 'town'):
@@ -555,7 +555,7 @@ def upd_town_fig(
     y_title = f"{town_metric.upper()} in {state}"
   else:
     y_title = f"{town_metric.upper()} in {town}"
-    
+
   fig     = get_trend(x, y, x_title, y_title)
 
   return fig
@@ -641,7 +641,7 @@ def upd_town_fig_cb(
   df_town = df[df['state'] == state]
   towns   = df_town['town'].unique()
   options = [{'label': i, 'value': i} for i in towns]
-  
+
   return comp, options
 
 """

@@ -28,19 +28,22 @@ from bootstrap import *
 # Get data
 # ======================================================================
 """
+min_date  = '2020-03-01'
+
 mysql_con, sql_svr_con = get_con(cfg['mysql'], cfg['sql_svr'])
-con       = sql_svr_con
-sql       = "select * from covid19_us_mds"
-df        = get_df_from_sql(sql, con)
+con        = sql_svr_con
+sql        = f"select * from covid19_us_mds where [date] > = {min_date}"
+df         = get_df_from_sql(sql, con)
 df['date'] = df['date'].astype('datetime64[ns]')
-rcnt_dt   = df['date'].max().date()
-states    = df['state'].unique()
-towns     = df['town'].unique()
+rcnt_dt    = df['date'].max().date()
+states     = df['state'].unique()
+towns      = df['town'].unique()
 
 def_metric= 'incidence'
 def_ver   = 'state'
 def_state = 'Massachusetts'
 def_town  = 'Middlesex, Massachusetts, US'
+
 
 df_rcnt   = df[df['date'] == rcnt_dt]
 
@@ -108,6 +111,21 @@ measures_dict = dict(zip(measure_cols, measure_desc))
 town_measure_cols = measure_cols
 cols = dim_cols + measure_cols
 
+sel_left = {
+  'width':          '64%',
+  'display':        'inline-block',
+  'vertical-align': 'top',
+  'padding':        '5px',
+}
+
+sel_right = {
+  'width':          '34%',
+  'display':        'inline-block',
+  'vertical-align': 'top',
+  'padding':        '5px',
+  'background-color': 'rgba(234,234,234)',
+}
+
 """
 # ======================================================================
 # Prep main layout
@@ -164,19 +182,37 @@ def get_tabs():
     label = label,
     value = tab,
     children = [
-      dcc.RadioItems(
-        id      = rb_id,
-        options = [{'label': measures_dict[i], 'value': i} for i in us_measure_cols],
-        value   = us_measure_cols[0]
+      html.Div([
+        dcc.Graph(
+          id     = fig_id,
+          figure = upd_us_fig(us_metric, us_metric_ver)
+        )
+      ], style = sel_left,
       ),
-      dcc.RadioItems(
-        id      = rb2_id,
-        options = [{'label': dim_dict[i], 'value': i} for i in ['state','town']],
-        value   = 'state'
-      ),      
-      dcc.Graph(
-        id     = fig_id,
-        figure = upd_us_fig(us_metric, us_metric_ver)
+      html.Div(
+        children = [
+          dcc.Markdown(f"""
+          ---
+          ####  Select Metric
+          """),
+          dcc.RadioItems(
+            id      = rb_id,
+            options = [{'label': measures_dict[i], 'value': i} for i in us_measure_cols],
+            value   = us_measure_cols[0]
+          ),
+          dcc.Markdown(f"""
+          ---
+          ####  Select View
+          """),
+          dcc.RadioItems(
+            id      = rb2_id,
+            options = [{'label': dim_dict[i], 'value': i} for i in ['state','town']],
+            value   = 'state'
+          ),      
+          dcc.Markdown(f"""
+          ---
+          """),
+        ], style = sel_right,
       )
     ]
   )
@@ -193,20 +229,39 @@ def get_tabs():
     label = label,
     value = tab,
     children = [
-      dcc.Dropdown(
-        id      = dd_id,
-        options = [{'label': i, 'value': i} for i in states],
-        value   = states[0]
+      html.Div(
+        children = [
+        dcc.Graph(
+          id     = fig_id,
+          figure = upd_state_fig(state, state_metric)
+        )
+        ], style = sel_left,
       ),
-      dcc.RadioItems(
-        id      = rb_id,
-        options = [{'label': measures_dict[i], 'value': i} for i in state_measure_cols],
-        value   = state_measure_cols[0]
-      ),
-      dcc.Graph(
-        id     = fig_id,
-        figure = upd_state_fig(state, state_metric)
-      )
+      html.Div(
+        children = [
+          dcc.Markdown(f"""
+          ---
+          ####  Select State
+          """),
+          dcc.Dropdown(
+            id      = dd_id,
+            options = [{'label': i, 'value': i} for i in states],
+            value   = states[0]
+          ),
+          dcc.Markdown(f"""
+          ---
+          ####  Select Metric
+          """),
+          dcc.RadioItems(
+            id      = rb_id,
+            options = [{'label': measures_dict[i], 'value': i} for i in state_measure_cols],
+            value   = state_measure_cols[0]
+          ),
+          dcc.Markdown(f"""
+          ---
+          """),
+        ], style = sel_right,
+        )
     ]
   )
   tabs.append(tab_1)
@@ -223,26 +278,48 @@ def get_tabs():
     label = label,
     value = tab,
     children = [
-      dcc.Dropdown(
-        id      = dd_id,
-        options = [{'label': i, 'value': i} for i in towns],
-        value   = towns[0]
+      html.Div(
+        children = [
+          dcc.Graph(
+            id     = fig_id,
+            figure = upd_town_fig(state, town, town_metric, 'state')
+          )
+        ], style = sel_left,
       ),
-      dcc.RadioItems(
-        id      = rb_id,
-        options = [{'label': measures_dict[i], 'value': i} for i in town_measure_cols],
-        value   = town_measure_cols[0]
-      ),
-      dcc.RadioItems(
-        id      = rb2_id,
-        options = [{'label': dim_dict[i], 'value': i} for i in ['state','town']],
-        value   = 'state'
-      ),
-      dcc.Graph(
-        id     = fig_id,
-        figure = upd_town_fig(state, town, town_metric, 'state')
-      )
-    ]
+      html.Div(
+        children = [
+          dcc.Markdown(f"""
+          ---
+          ####  Select County/Town
+          """),
+          dcc.Dropdown(
+            id      = dd_id,
+            options = [{'label': i, 'value': i} for i in towns],
+            value   = towns[0]
+          ),
+          dcc.Markdown(f"""
+          ---
+          ####  Select Metric
+          """),
+          dcc.RadioItems(
+            id      = rb_id,
+            options = [{'label': measures_dict[i], 'value': i} for i in town_measure_cols],
+            value   = town_measure_cols[0]
+          ),
+          dcc.Markdown(f"""
+          ---
+          ####  Select View
+          """),
+          dcc.RadioItems(
+            id      = rb2_id,
+            options = [{'label': dim_dict[i], 'value': i} for i in ['state','town']],
+            value   = 'state'
+          ),
+          dcc.Markdown(f"""
+          ---
+          """),
+        ], style = sel_right,
+    )]
   )
   tabs.append(tab_2)
 
@@ -358,31 +435,34 @@ def get_rlvt_data(
   """
   num_top_points = 20
   
-  p_str = f"""
-    viz_type    = {viz_type}
-    metric      = {metric}
-    metric_ver  = {metric_ver}
-    filter_val  = {filter_val}
-  """
-  #p_print(p_str)
+  def summarize_df(df, metric, group_by):
+    avg_metrics = [ 'incidence_inc_pct',  'incidence_rate_pct', 'death_rate_pct' ]
+    sum_metrics = [ 'population', 'incidence', 'incidence_inc', 'deaths' ] 
+    
+    if (metric in avg_metrics):
+      df_out = df.groupby(group_by)[metric].avg()
+    elif (metric in sum_metrics):
+      df_out = df.groupby(group_by)[metric].sum()
+      
+    df_out = pd.DataFrame(df_out)
+    df_out = df_out.reset_index()
+    
+    return df_out
   
   df_out    = df[dim_cols + [metric]]
   curr_date = df_out['date'].max()
 
   if (viz_type in [ 'us'] ):
     df_out    = df_out[df_out['date'] == curr_date]
-    
     if (metric_ver == 'state'):
-      df_out = pd.DataFrame(df_out.groupby([metric_ver])[metric].sum())
-      df_out = df_out.reset_index()
+      df_out = summarize_df(df_out, metric, metric_ver)
   elif (viz_type == 'state'):
-    df_out    = df_out[df_out['date'] == curr_date]
+    df_out = df_out[df_out['date'] == curr_date]
     df_out = df_out[df_out['state'] == filter_val]
   elif (viz_type == 'town'):
     df_out = df_out[df_out['state'] == filter_val]
     if (metric_ver == 'state'):
-      df_out = pd.DataFrame(df_out.groupby(['date', metric_ver])[metric].sum())
-      df_out = df_out.reset_index()
+      df_out = summarize_df(df_out, metric, ['date', metric_ver])
 
   if (viz_type in [ 'us', 'state' ]):
     # get top 20 by metric
@@ -506,11 +586,7 @@ def upd_town_fig(
 # Define app
 # ======================================================================
 """
-external_stylesheets = ['https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css']
-app = dash.Dash(
-    __name__,
-    external_stylesheets=external_stylesheets
-)
+app = dash.Dash(__name__)
 app.config.suppress_callback_exceptions = True
 app.layout = html.Div([
 
