@@ -32,9 +32,11 @@ min_date  = '2020-03-01'
 
 mysql_con, sql_svr_con = get_con(cfg['mysql'], cfg['sql_svr'])
 con        = sql_svr_con
-sql        = f"select * from covid19_us_mds where [date] > = {min_date}"
+sql        = f"select * from covid19_us_mds"
 df         = get_df_from_sql(sql, con)
 df['date'] = df['date'].astype('datetime64[ns]')
+df         = df[df['date'] >= min_date]
+
 rcnt_dt    = df['date'].max().date()
 states     = df['state'].unique()
 towns      = df['town'].unique()
@@ -370,10 +372,10 @@ def get_top_fig(x_top, y_top, x_title, y_title):
     'layout': {
       'paper_bgcolor': "LightSteelBlue",
       'bgcolor':       'White',
-      'height':        500,
-      'margin':        {'l': 300, 'b': 70, 'r': 60, 't': 30},
+      'height':        600,
+      'margin':        {'l': 200, 'b': 70, 'r': 10, 't': 5},
       'xaxis':         {'title': f"{x_title}"},
-      'yaxis':         {},
+      'yaxis':         {'tickformat':',.0f'},
       'font':          {'family':'Century Gothic', 'size':'14', 'color':'black'},
       'annotations':   annotations,
     }
@@ -404,10 +406,10 @@ def get_trend(x, y, x_title, y_title):
     'layout': {
       'paper_bgcolor': "LightSteelBlue",
       'bgcolor':       'White',
-      'height':        500,
-      'margin':        {'l': 70, 'b': 70, 'r': 30, 't': 30},
+      'height':        600,
+      'margin':        {'l': 100, 'b': 70, 'r': 10, 't': 5},
       'xaxis':         {'title': f"{x_title}"},
-      'yaxis':         {'title': f"{y_title}", 'type': 'linear'},
+      'yaxis':         {'title': f"{y_title}", 'type': 'linear', 'tickformat':',.0f'},
       'font':          {'family':'Century Gothic', 'size':'14', 'color':'black'},
       'clickmode':     'event+select',
     }
@@ -440,7 +442,7 @@ def get_rlvt_data(
     sum_metrics = [ 'population', 'incidence', 'incidence_inc', 'deaths' ] 
     
     if (metric in avg_metrics):
-      df_out = df.groupby(group_by)[metric].avg()
+      df_out = df.groupby(group_by)[metric].agg('mean')
     elif (metric in sum_metrics):
       df_out = df.groupby(group_by)[metric].sum()
       
