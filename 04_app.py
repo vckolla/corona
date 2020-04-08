@@ -8,6 +8,7 @@ import sys
 import pandas               as pd
 import numpy                as np
 
+import dash_table
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -53,7 +54,8 @@ tab_dict = {
   'tab_smry': f"Summary",
   'tab_0':    f"US 'High Risk'",
   'tab_1':    f"State 'High Risk'",
-  'tab_2':    f"Over time trends"
+  'tab_2':    f"Over time trends",
+  'tab_3':    f"Data",
 }
 
 dim_desc = [
@@ -131,10 +133,14 @@ town_metric_ver   = def_ver
 # ======================================================================
 """
 sel_left = {
-  'width':          '64%',
-  'display':        'inline-block',
-  'vertical-align': 'top',
-  'padding':        '5px',
+  'width':            '64%',
+  'display':          'inline-block',
+  'vertical-align':   'top',
+  'padding':          '5px',
+  'overflow-x':       'scroll',
+  'overflow-y':       'scroll',
+  'height':           '650px',
+  'font':             'Century Gothic',
 }
 
 sel_right = {
@@ -143,6 +149,10 @@ sel_right = {
   'vertical-align':   'top',
   'padding':          '5px',
   'background-color': 'rgba(234,234,234)',
+  'overflow-x':       'scroll',
+  'overflow-y':       'scroll',
+  'height':           '650px',
+  'font':             'Century Gothic',
 }
 
 """
@@ -345,6 +355,66 @@ def get_county_tab():
 
 """
 # ======================================================================
+# Define tabs - Data tab
+# ======================================================================
+"""
+def get_data_tab():
+  tab        = 'tab_3'
+  label      = tab_dict[tab]
+  st_dd_id   = 'data_state_metric_dd'
+  twn_dd_id  = 'data_town_metric_dd'
+  tab_3 = dcc.Tab(
+    label = label,
+    value = tab,
+    children = [
+      html.Div(
+        children = [
+          dash_table.DataTable(
+            id='dat_tab',
+            columns = [
+                {'name': i, "id": i} for i in (df_rcnt.columns)
+            ],
+            page_current      = 0,
+            page_size         = 10,
+            page_action       = 'custom',
+            style_data_conditional=[{
+                'if':{'row_index':'odd'},
+                'backgroundColor': 'rgb(248,248,248)'
+            }]
+          )
+        ], style = sel_left,
+      ),
+      html.Div(
+        children = [
+          dcc.Markdown(f"""
+          ---
+          ####  Select State
+          """),
+          dcc.Dropdown(
+            id      = st_dd_id,
+            options = [{'label': i, 'value': i} for i in states],
+            value   = state[0]
+          ),
+          dcc.Markdown(f"""
+          ---
+          ####  Select Town
+          """),
+          dcc.Dropdown(
+            id      = twn_dd_id,
+            options = [{'label': i, 'value': i} for i in towns],
+            value   = towns[0]
+          ),
+          dcc.Markdown(f"""
+          ---
+          """),
+        ], style = sel_right,
+      )        
+    ]
+  )
+  return tab_3
+
+"""
+# ======================================================================
 # Prep main layout
 # ======================================================================
 """
@@ -355,6 +425,7 @@ def get_tabs():
   tabs.append(get_us_tab())
   tabs.append(get_state_tab())
   tabs.append(get_county_tab())
+  tabs.append(get_data_tab())
 
   return tabs
 
@@ -700,6 +771,23 @@ def upd_town_fig_cb(
   options = [{'label': i, 'value': i} for i in towns]
   
   return comp, options
+
+"""
+# ======================================================================
+# Data table call back
+# ======================================================================
+"""
+@app.callback(
+    Output('dat_tab', 'data'),
+    [
+        Input('dat_tab', "page_current"),
+        Input('dat_tab',  "page_size")
+    ]
+)
+def update_table(page_current, page_size):
+  return df_rcnt.iloc[
+      page_current*page_size : (page_current+ 1)*page_size
+  ].to_dict('records')
 
 """
 # ======================================================================
