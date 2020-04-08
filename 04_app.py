@@ -31,6 +31,7 @@ from bootstrap import *
 min_date  = '2020-03-01'
 
 mysql_con, sql_svr_con = get_con(cfg['mysql'], cfg['sql_svr'])
+
 con        = sql_svr_con
 sql        = f"select * from covid19_us_mds"
 df         = get_df_from_sql(sql, con)
@@ -41,13 +42,12 @@ rcnt_dt    = df['date'].max().date()
 states     = df['state'].unique()
 towns      = df['town'].unique()
 
-def_metric= 'incidence'
-def_ver   = 'state'
-def_state = 'Massachusetts'
-def_town  = 'Middlesex, Massachusetts, US'
+def_metric = 'incidence'
+def_ver    = 'state'
+def_state  = 'Massachusetts'
+def_town   = 'Middlesex, Massachusetts, US'
 
-
-df_rcnt   = df[df['date'] == rcnt_dt]
+df_rcnt    = df[df['date'] == rcnt_dt]
 
 """
 # ======================================================================
@@ -62,9 +62,9 @@ tab_dict = {
 }
 
 dim_desc = [
-    'State ',
-    'Town ',
-    'Date '
+  'State ',
+  'Town ',
+  'Date '
 ]
 
 dim_cols = [
@@ -121,10 +121,10 @@ sel_left = {
 }
 
 sel_right = {
-  'width':          '34%',
-  'display':        'inline-block',
-  'vertical-align': 'top',
-  'padding':        '5px',
+  'width':            '34%',
+  'display':          'inline-block',
+  'vertical-align':   'top',
+  'padding':          '5px',
   'background-color': 'rgba(234,234,234)',
 }
 
@@ -146,27 +146,23 @@ def get_tabs():
   town_metric_ver = def_ver
 
   # Define tab_smry
-  tab    = 'tab_smry'
-  label  = tab_dict[tab]
+  tab   = 'tab_smry'
+  label = tab_dict[tab]
   tab_smry = dcc.Tab(
     label = label,
     value = tab,
     children = [
       dcc.Markdown(f"""
       # US COVID 19 Tracker (as of {rcnt_dt})
-      
       ---
-      
       >  | Metric | Value |
       >  | ------ | ------|
       >  | States analyzed: | **{len(states)}** |
       >  | Towns analyzed:  | **{len(towns):,.0f}**  |
       >  | Incidents:       | **{df_rcnt['incidence'].sum():,.0f}**  |
       >  | Incidents increase from prev day: | **{df_rcnt['incidence_inc'].sum():,.0f}**  |
-      >  | Deaths:         | **{df_rcnt['deaths'].sum():,.0f}**  |
-      
+      >  | Deaths:          | **{df_rcnt['deaths'].sum():,.0f}**  |
       ---
-      
       """
       )
     ]
@@ -341,6 +337,7 @@ def get_top_fig(x_top, y_top, x_title, y_title):
   x_title: title of x_axis
   y_title: title of y_axis
   """
+  
   # ====================================================================
   # Adjust anotations
   # Invest some more time in auto adjustment of formattt based on c
@@ -402,16 +399,23 @@ def get_trend(x, y, x_title, y_title):
       x =    x,
       y =    y,
       mode = 'lines+markers',
+      name = y_title,
     ) ],
     'layout': {
       'paper_bgcolor': "LightSteelBlue",
       'bgcolor':       'White',
       'height':        600,
-      'margin':        {'l': 100, 'b': 70, 'r': 10, 't': 5},
+      'margin':        {'l': 75, 'b': 70, 'r': 10, 't': 5},
       'xaxis':         {'title': f"{x_title}"},
-      'yaxis':         {'title': f"{y_title}", 'type': 'linear', 'tickformat':',.0f'},
+      'yaxis':         {'tickformat':',.1f'},
       'font':          {'family':'Century Gothic', 'size':'14', 'color':'black'},
       'clickmode':     'event+select',
+      'hovermode':     'x unified',
+      'hoverlabel':    {'bgcolor':'white', 'font_size':'12'},
+      'showlegend':    True,
+      'legend_orientation': 'h',
+      'legend':        dict(x=0, y=1.1),
+      'traceorder':    'normal',
     }
   }
   return fig
@@ -490,7 +494,6 @@ def cap_it(y, cap_val):
   if (y >= cap_val): return cap_val
   if (y <= -cap_val): return -cap_val
   else: return y
-
 
 """
 # ======================================================================
