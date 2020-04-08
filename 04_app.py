@@ -160,6 +160,18 @@ sel_right = {
   'font':             'Century Gothic',
 }
 
+sel_full = {
+  'width':            '99%',
+  'display':          'inline-block',
+  'vertical-align':   'top',
+  'padding':          '5px',
+  'background-color': 'rgba(234,234,234)',
+  'overflow-x':       'scroll',
+  'overflow-y':       'scroll',
+  'height':           '650px',
+  'font':             'Century Gothic',
+}
+
 tab_style = {
   'fontWeight':       'bold',
 }
@@ -211,10 +223,16 @@ def get_smry_tab():
         | *Incidents:*          || **{df_rcnt['incidence'].sum():,.0f}**  |
         | *Incidents increase:* || **{df_rcnt['incidence_inc'].sum():,.0f}**  |
         | *Deaths:*             || **{df_rcnt['deaths'].sum():,.0f}**  |
-        
+
         ---
         
-        ***(c) 2020 me:dha: inc.***
+        Source: ***[Corona JHU Git Repo] (https://github.com/CSSEGISandData/COVID-19) ***
+        
+        ---
+        Built on: ***[Python Dash framework] (https://plotly.com/dash/)***
+        
+        
+        ***(c) 2020 me:dha:.ai***
         """
         )
       ]
@@ -431,7 +449,7 @@ def get_data_tab():
                 {'name': i, "id": i} for i in (df_rcnt.columns)
             ],
             page_current      = 0,
-            page_size         = 20,
+            page_size         = 15,
             page_action       = 'custom',
             style_data_conditional=[{
                 'if':{'row_index':'odd'},
@@ -444,33 +462,8 @@ def get_data_tab():
               'color':       'white',
             },
           )
-        ], style = sel_left,
-      ),
-      html.Div(
-        children = [
-          dcc.Markdown(f"""
-          ---
-          ####  Select State
-          """),
-          dcc.Dropdown(
-            id      = st_dd_id,
-            options = [{'label': i, 'value': i} for i in states],
-            value   = state[0]
-          ),
-          dcc.Markdown(f"""
-          ---
-          ####  Select Town
-          """),
-          dcc.Dropdown(
-            id      = twn_dd_id,
-            options = [{'label': i, 'value': i} for i in towns],
-            value   = towns[0]
-          ),
-          dcc.Markdown(f"""
-          ---
-          """),
-        ], style = sel_right,
-      )        
+        ], style = sel_full,
+      )
     ]
   )
   return tab_3
