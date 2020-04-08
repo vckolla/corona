@@ -226,13 +226,15 @@ def get_smry_tab():
 
         ---
         
-        Source: ***[Corona JHU Git Repo] (https://github.com/CSSEGISandData/COVID-19) ***
+        Source: ***[Corona John Hopkins University Git Repo] (https://github.com/CSSEGISandData/COVID-19) ***
         
         ---
         Built on: ***[Python Dash framework] (https://plotly.com/dash/)***
         
         
         ***(c) 2020 me:dha:.ai***
+
+        ---
         """
         )
       ]
