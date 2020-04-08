@@ -155,6 +155,20 @@ sel_right = {
   'font':             'Century Gothic',
 }
 
+tab_style = {
+  #'padding':          '12px',
+  #'vertical-align':   'middle',
+  'fontWeight':       'bold',
+}
+
+tab_selected_style = {
+  #'padding':          '12px',
+  #'vertical-align':   'middle',
+  'fontWeight':       'bold',
+  'backgroundColor':  'blue',
+  'color':            'white',
+}
+
 """
 # ======================================================================
 # Define tabs - summary
@@ -166,6 +180,8 @@ def get_smry_tab():
   tab_smry = dcc.Tab(
       label = label,
       value = tab,
+      style = tab_style,
+      selected_style = tab_selected_style,
       children = [
         dcc.Markdown(f"""
         # US COVID 19 Tracker (as of {rcnt_dt})
@@ -178,6 +194,8 @@ def get_smry_tab():
         >  | Incidents increase from prev day: | **{df_rcnt['incidence_inc'].sum():,.0f}**  |
         >  | Deaths:          | **{df_rcnt['deaths'].sum():,.0f}**  |
         ---
+        
+        * (c) Me:dha: inc. *
         """
         )
       ]
@@ -199,6 +217,8 @@ def get_us_tab():
   tab_0 = dcc.Tab(
     label = label,
     value = tab,
+    style = tab_style,
+    selected_style = tab_selected_style,
     children = [
       html.Div([
         dcc.Graph(
@@ -254,6 +274,8 @@ def get_state_tab():
   tab_1 = dcc.Tab(
     label = label,
     value = tab,
+    style = tab_style,
+    selected_style = tab_selected_style,
     children = [
       html.Div(
         children = [
@@ -310,6 +332,8 @@ def get_county_tab():
   tab_2 = dcc.Tab(
     label = label,
     value = tab,
+    style = tab_style,
+    selected_style = tab_selected_style,
     children = [
       html.Div(
         children = [
@@ -371,6 +395,8 @@ def get_data_tab():
   tab_3 = dcc.Tab(
     label = label,
     value = tab,
+    style = tab_style,
+    selected_style = tab_selected_style,
     children = [
       html.Div(
         children = [
@@ -385,7 +411,13 @@ def get_data_tab():
             style_data_conditional=[{
                 'if':{'row_index':'odd'},
                 'backgroundColor': 'rgb(248,248,248)'
-            }]
+            }],
+            style_cell={'fontSize':14, 'font-family':'Century Gothic'},
+            style_header={
+              'backgroundColor': 'rgb(0, 102, 255)',
+              'fontWeight':      'bold',
+              'color':       'white',
+            },
           )
         ], style = sel_left,
       ),
