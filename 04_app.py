@@ -8,11 +8,16 @@ import sys
 import pandas               as pd
 import numpy                as np
 
+#import dash_daq             as daq
 import dash_table
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+
+#import plotly.express       as px
+
 from   dash.dependencies    import Input, Output
+
 
 """
 # ======================================================================
@@ -156,17 +161,20 @@ sel_right = {
 }
 
 tab_style = {
-  #'padding':          '12px',
-  #'vertical-align':   'middle',
   'fontWeight':       'bold',
 }
 
 tab_selected_style = {
-  #'padding':          '12px',
-  #'vertical-align':   'middle',
   'fontWeight':       'bold',
   'backgroundColor':  'blue',
   'color':            'white',
+}
+
+chk_bx_style = {
+  'display':          'block',
+  'overflow-x':       'scroll',
+  'overflow-y':       'scroll',
+  'height':           '200px',
 }
 
 """
@@ -193,16 +201,16 @@ def get_smry_tab():
         ## Data Summary
         
         
-        | Metric | Value |
-        | ------ | ------|
-        | | |
-        | From Date:          | **{df['date'].min().date()}** |
-        | To Date:            | **{df['date'].max().date()}** |
-        | States analyzed:    | **{len(states)}** |
-        | Towns analyzed:     | **{len(towns):,.0f}**  |
-        | Incidents:          | **{df_rcnt['incidence'].sum():,.0f}**  |
-        | Incidents increase: | **{df_rcnt['incidence_inc'].sum():,.0f}**  |
-        | Deaths:             | **{df_rcnt['deaths'].sum():,.0f}**  |
+        |Metric|     |Value|
+        |---:| :-: | :-: |
+        | | | |
+        | *From Date:*          || **{df['date'].min().date()}** |
+        | *To Date:*            || **{df['date'].max().date()}** |
+        | *States analyzed:*    || **{len(states)}** |
+        | *Counties analyzed:*  || **{len(towns):,.0f}**  |
+        | *Incidents:*          || **{df_rcnt['incidence'].sum():,.0f}**  |
+        | *Incidents increase:* || **{df_rcnt['incidence_inc'].sum():,.0f}**  |
+        | *Deaths:*             || **{df_rcnt['deaths'].sum():,.0f}**  |
         
         ---
         
@@ -356,14 +364,20 @@ def get_county_tab():
       ),
       html.Div(
         children = [
-          dcc.Markdown(f"""
-          ---
-          ####  Select County/Town
-          """),
-          dcc.Dropdown(
-            id      = dd_id,
-            options = [{'label': i, 'value': i} for i in towns],
-            value   = towns[0]
+          html.Div(
+            children = [
+              dcc.Markdown(f"""
+              ---
+              ####  Select County/Town
+              """),
+              #dcc.Dropdown(
+              dcc.Checklist(
+                id      = dd_id,
+                options = [{'label': i, 'value': i} for i in towns],
+                value   = [ towns[0] ],
+                labelStyle={'display':'block'},
+              ),
+            ], style = chk_bx_style
           ),
           dcc.Markdown(f"""
           ---
@@ -417,7 +431,7 @@ def get_data_tab():
                 {'name': i, "id": i} for i in (df_rcnt.columns)
             ],
             page_current      = 0,
-            page_size         = 10,
+            page_size         = 20,
             page_action       = 'custom',
             style_data_conditional=[{
                 'if':{'row_index':'odd'},
@@ -538,7 +552,7 @@ def get_top_fig(x_top, y_top, x_title, y_title):
 # Component update functions - get trend chart
 # ======================================================================
 """
-def get_trend(x, y, x_title, y_title):
+def get_trend(data, x_title, y_title):
   """get_trend - Get a line chart
   x:       x_axis values
   y:       y_axis values
@@ -549,12 +563,7 @@ def get_trend(x, y, x_title, y_title):
   # Boiler plate configuration for line charts
   # ====================================================================
   fig = {
-    'data': [ dict(
-      x =    x,
-      y =    y,
-      mode = 'lines+markers',
-      name = y_title,
-    ) ],
+    'data': data,
     'layout': {
       'paper_bgcolor': "LightSteelBlue",
       'bgcolor':       'White',
@@ -570,6 +579,7 @@ def get_trend(x, y, x_title, y_title):
       'legend_orientation': 'h',
       'legend':        dict(x=0, y=1.1),
       'traceorder':    'normal',
+      'connectgaps':    False,
     }
   }
   return fig
@@ -614,13 +624,17 @@ def get_rlvt_data(
 
   if (viz_type in [ 'us'] ):
     df_out    = df_out[df_out['date'] == curr_date]
+    
     if (metric_ver == 'state'):
       df_out = summarize_df(df_out, metric, metric_ver)
+      
   elif (viz_type == 'state'):
     df_out = df_out[df_out['date'] == curr_date]
     df_out = df_out[df_out['state'] == filter_val]
+    
   elif (viz_type == 'town'):
     df_out = df_out[df_out['state'] == filter_val]
+    
     if (metric_ver == 'state'):
       df_out = summarize_df(df_out, metric, ['date', metric_ver])
 
@@ -707,6 +721,28 @@ def upd_state_fig(
 # Do not filter on any dates - this is the most granular metric
 # ======================================================================
 """
+def upd_town_fig_new(
+  state,
+  town,
+  town_metric,
+  town_metric_ver
+):
+  """upd_town_fig - Update a given chart
+  state:  The state to which the town belongs
+  town:   The town to update
+  metric: The metric to update
+  """
+  df_town, curr_date  = get_rlvt_data(
+      df, 'town', town_metric, 
+      town_metric_ver, state)
+
+  if (town_metric_ver == 'town'):
+    df_town = df_town[df_town['town'].isin(town)]
+
+  fig = px.line(df, x='date', y=town_metric, color='town')
+
+  return fig
+
 def upd_town_fig(
   state,
   town,
@@ -723,18 +759,26 @@ def upd_town_fig(
       town_metric_ver, state)
 
   if (town_metric_ver == 'town'):
-    df_town = df_town[df_town['town'] == town]
+    df_town = df_town[df_town['town'].isin(town)]
+    
+  data = []
+  mode = 'lines+markers'
 
-  x       = df_town['date']
-  y       = df_town[town_metric]
   x_title = f"Date"
   if (town_metric_ver == 'state'):
     y_title = f"{town_metric.upper()} in {state}"
+    x       = df_town['date']
+    y       = df_town[town_metric]
+    data.append({'x': x, 'y': y, 'mode': mode, 'name': state})
   else:
     y_title = f"{town_metric.upper()} in {town}"
-    
-  fig     = get_trend(x, y, x_title, y_title)
-
+    for t in town:
+      x = df_town['date']
+      y = df_town[df_town['town'] == t][town_metric]
+      data.append({'x':x, 'y':y, 'mode': mode, 'name': t})
+  
+  fig = get_trend(data, x_title, y_title)
+  
   return fig
 
 """
