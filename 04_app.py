@@ -8,13 +8,10 @@ import sys
 import pandas               as pd
 import numpy                as np
 
-#import dash_daq             as daq
 import dash_table
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-
-#import plotly.express       as px
 
 from   dash.dependencies    import Input, Output
 
@@ -36,11 +33,12 @@ from bootstrap import *
 """
 min_date  = '2020-03-01'
 
-mysql_con, sql_svr_con = get_con(cfg['mysql'], cfg['sql_svr'])
+#mysql_con, sql_svr_con = get_con(cfg['mysql'], cfg['sql_svr'])
 
-con        = sql_svr_con
-sql        = f"select * from covid19_us_mds"
-df         = get_df_from_sql(sql, con)
+#con        = sql_svr_con
+#sql        = f"select * from covid19_us_mds"
+#df         = get_df_from_sql(sql, con)
+df         = pd.read_csv("covid19_us_2020_04_07.csv")
 df['date'] = df['date'].astype('datetime64[ns]')
 df         = df[df['date'] >= min_date]
 
