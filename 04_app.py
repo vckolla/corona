@@ -216,7 +216,8 @@ def get_us_tab():
           dcc.RadioItems(
             id      = rb_id,
             options = [{'label': measures_dict[i], 'value': i} for i in us_measure_cols],
-            value   = us_measure_cols[0]
+            value   = us_measure_cols[0],
+            labelStyle={'display':'block'}
           ),
           dcc.Markdown(f"""
           ---
@@ -225,7 +226,8 @@ def get_us_tab():
           dcc.RadioItems(
             id      = rb2_id,
             options = [{'label': dim_dict[i], 'value': i} for i in ['state','town']],
-            value   = 'state'
+            value   = 'state',
+            labelStyle={'display':'block'}
           ),      
           dcc.Markdown(f"""
           ---
@@ -279,7 +281,8 @@ def get_state_tab():
           dcc.RadioItems(
             id      = rb_id,
             options = [{'label': measures_dict[i], 'value': i} for i in state_measure_cols],
-            value   = state_measure_cols[0]
+            value   = state_measure_cols[0],
+            labelStyle={'display':'block'}
           ),
           dcc.Markdown(f"""
           ---
@@ -323,11 +326,9 @@ def get_county_tab():
           ####  Select County/Town
           """),
           dcc.Dropdown(
-          #dcc.Checklist(
             id      = dd_id,
             options = [{'label': i, 'value': i} for i in towns],
             value   = towns[0]
-            #value   = [towns[0]]
           ),
           dcc.Markdown(f"""
           ---
@@ -336,7 +337,8 @@ def get_county_tab():
           dcc.RadioItems(
             id      = rb_id,
             options = [{'label': measures_dict[i], 'value': i} for i in town_measure_cols],
-            value   = town_measure_cols[0]
+            value   = town_measure_cols[0],
+            labelStyle={'display':'block'}
           ),
           dcc.Markdown(f"""
           ---
@@ -345,7 +347,8 @@ def get_county_tab():
           dcc.RadioItems(
             id      = rb2_id,
             options = [{'label': dim_dict[i], 'value': i} for i in ['state','town']],
-            value   = 'state'
+            value   = 'state',
+            labelStyle={'display':'block'}
           ),
           dcc.Markdown(f"""
           ---
