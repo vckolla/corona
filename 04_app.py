@@ -174,7 +174,7 @@ chk_bx_style = {
   'display':          'block',
   'overflow-x':       'scroll',
   'overflow-y':       'scroll',
-  'height':           '200px',
+  'height':           '275px',
 }
 
 """
