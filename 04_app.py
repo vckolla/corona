@@ -184,18 +184,29 @@ def get_smry_tab():
       selected_style = tab_selected_style,
       children = [
         dcc.Markdown(f"""
-        # US COVID 19 Tracker (as of {rcnt_dt})
         ---
-        >  | Metric | Value |
-        >  | ------ | ------|
-        >  | States analyzed: | **{len(states)}** |
-        >  | Towns analyzed:  | **{len(towns):,.0f}**  |
-        >  | Incidents:       | **{df_rcnt['incidence'].sum():,.0f}**  |
-        >  | Incidents increase from prev day: | **{df_rcnt['incidence_inc'].sum():,.0f}**  |
-        >  | Deaths:          | **{df_rcnt['deaths'].sum():,.0f}**  |
+
+        # US COVID 19 Tracker (as of {rcnt_dt})
+        
         ---
         
-        * (c) Me:dha: inc. *
+        ## Data Summary
+        
+        
+        | Metric | Value |
+        | ------ | ------|
+        | | |
+        | From Date:          | **{df['date'].min().date()}** |
+        | To Date:            | **{df['date'].max().date()}** |
+        | States analyzed:    | **{len(states)}** |
+        | Towns analyzed:     | **{len(towns):,.0f}**  |
+        | Incidents:          | **{df_rcnt['incidence'].sum():,.0f}**  |
+        | Incidents increase: | **{df_rcnt['incidence_inc'].sum():,.0f}**  |
+        | Deaths:             | **{df_rcnt['deaths'].sum():,.0f}**  |
+        
+        ---
+        
+        ***(c) 2020 me:dha: inc.***
         """
         )
       ]
