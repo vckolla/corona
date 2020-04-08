@@ -323,9 +323,11 @@ def get_county_tab():
           ####  Select County/Town
           """),
           dcc.Dropdown(
+          #dcc.Checklist(
             id      = dd_id,
             options = [{'label': i, 'value': i} for i in towns],
             value   = towns[0]
+            #value   = [towns[0]]
           ),
           dcc.Markdown(f"""
           ---
