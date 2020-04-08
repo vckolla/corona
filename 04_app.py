@@ -446,7 +446,7 @@ def get_trend(x, y, x_title, y_title):
       'font':          {'family':'Century Gothic', 'size':'14', 'color':'black'},
       'clickmode':     'event+select',
       'hovermode':     'x unified',
-      'hoverlabel':    {'bgcolor':'white', 'font_size':'14'},
+      'hoverlabel':    {'bgcolor':'lightgray', 'font_size':'14'},
       'showlegend':    True,
       'legend_orientation': 'h',
       'legend':        dict(x=0, y=1.1),
