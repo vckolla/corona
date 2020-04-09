@@ -163,8 +163,8 @@ def get_smry_tab():
   tab_smry = dcc.Tab(
       label = label,
       value = tab,
-      #style = "tab_style",
-      #selected_style = "tab_selected_style",
+      className="custom-tab",
+      selected_className="custom-tab--selected",
       children = [
         dcc.Markdown(f"""
         ---
@@ -219,8 +219,8 @@ def get_us_tab():
   tab_0 = dcc.Tab(
     label = label,
     value = tab,
-    #style = tab_style,
-    #selected_style = tab_selected_style,
+    className="custom-tab",
+    selected_className="custom-tab--selected",
     children = [
       html.Div(
         className = "sel_left",
@@ -279,8 +279,8 @@ def get_state_tab():
   tab_1 = dcc.Tab(
     label = label,
     value = tab,
-    #style = tab_style,
-    #selected_style = tab_selected_style,
+    className="custom-tab",
+    selected_className="custom-tab--selected",
     children = [
       html.Div(
         className = "sel_left",
@@ -339,8 +339,8 @@ def get_county_tab():
   tab_2 = dcc.Tab(
     label = label,
     value = tab,
-    #style = tab_style,
-    #selected_style = tab_selected_style,
+    className="custom-tab",
+    selected_className="custom-tab--selected",
     children = [
       html.Div(
         className = "sel_left",
@@ -410,8 +410,8 @@ def get_data_tab():
   tab_3 = dcc.Tab(
     label = label,
     value = tab,
-    #style = tab_style,
-    #selected_style = tab_selected_style,
+    className="custom-tab",
+    selected_className="custom-tab--selected",
     children = [
       html.Div(
         className = "sel_full",
@@ -733,7 +733,10 @@ def upd_town_fig(
 app = dash.Dash(__name__)
 app.config.suppress_callback_exceptions = True
 app.layout = html.Div([
-    dcc.Tabs(id='tabs', value = 'tab_smry',
+    dcc.Tabs(
+      id    = 'tabs', 
+      value = 'tab_smry',
+      parent_className='custom-tabs',
         children=get_tabs()
       )
   ], style={'width': '95%'}
