@@ -163,8 +163,8 @@ def get_smry_tab():
   tab_smry = dcc.Tab(
       label = label,
       value = tab,
-      style = "tab_style",
-      selected_style = "tab_selected_style",
+      #style = "tab_style",
+      #selected_style = "tab_selected_style",
       children = [
         dcc.Markdown(f"""
         ---

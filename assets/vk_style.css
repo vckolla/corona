@@ -27,7 +27,7 @@ h1, h2, h3, h4, h5, h6 {
   overflow-y:     scroll;
   height:         650px;
   font:           "Century Gothic";
-  background-color: darkgray;
+  background-color: rgba(234,234,234);
 }
 
 .sel_full {
@@ -39,7 +39,7 @@ h1, h2, h3, h4, h5, h6 {
   overflow-y:     scroll;
   height:         650px;
   font:           "Century Gothic";
-  background-color: darkgray;
+  background-color:rgba(234,234,234);
 }
 
 .tab_style {
