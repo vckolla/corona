@@ -55,12 +55,12 @@ from bootstrap import *
 """
 min_date  = '2020-03-01'
 
-#mysql_con, sql_svr_con = get_con(cfg['mysql'], cfg['sql_svr'])
+mysql_con, sql_svr_con = get_con(cfg['mysql'], cfg['sql_svr'])
 
-#con        = sql_svr_con
-#sql        = f"select * from covid19_us_mds"
-#df         = get_df_from_sql(sql, con)
-df         = pd.read_csv("covid19_us_2020_04_07.csv")
+con        = sql_svr_con
+sql        = f"select * from covid19_us_mds"
+df         = get_df_from_sql(sql, con)
+#df         = pd.read_csv("covid19_us_2020_04_07.csv")
 df['date'] = df['date'].astype('datetime64[ns]')
 df         = df[df['date'] >= min_date]
 
@@ -462,7 +462,12 @@ def get_tabs():
 # Component update functions - get top values
 # ======================================================================
 """
-def get_top_fig(x_top, y_top, x_title, y_title):
+def get_top_fig(
+  x_top, 
+  y_top, 
+  x_title, 
+  y_title
+):
   """get_top_fig - Get a horizontal bar chart representing
      the top values by a given measure on a given date
 
@@ -474,8 +479,8 @@ def get_top_fig(x_top, y_top, x_title, y_title):
   
   # ====================================================================
   # Adjust anotations
-  # Invest some more time in auto adjustment of formattt based on c
-  # and based on data
+  # Invest some more time in auto adjustment of format based on 
+  # metric type and and based on data
   # ====================================================================
   annotations = []
   x_top = x_top.values
@@ -518,7 +523,11 @@ def get_top_fig(x_top, y_top, x_title, y_title):
 # Component update functions - get trend chart
 # ======================================================================
 """
-def get_trend(data, x_title, y_title):
+def get_trend(
+  data, 
+  x_title, 
+  y_title
+):
   """get_trend - Get a line chart
   x:       x_axis values
   y:       y_axis values
