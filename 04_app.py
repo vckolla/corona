@@ -1,4 +1,27 @@
 """
+Copyright 2020 me:dha:.ai.
+
+Permission is hereby granted, free of charge, to any person obtaining a 
+copy of this software and associated documentation files (the "Software"), 
+to deal in the Software without restriction, including without limitation 
+the rights to use, copy, modify, merge, publish, distribute, sublicense, 
+and/or sell copies of the Software, and to permit persons to whom the 
+Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included 
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF 
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
+
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY 
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+"""
+
+"""
 # ======================================================================
 # Imports
 # ======================================================================
@@ -14,7 +37,6 @@ import dash_core_components as dcc
 import dash_html_components as html
 
 from   dash.dependencies    import Input, Output
-
 
 """
 # ======================================================================
@@ -132,63 +154,6 @@ town_metric_ver   = def_ver
 
 """
 # ======================================================================
-# Convert to css. Styling of html div sections
-# ======================================================================
-"""
-sel_left = {
-  'width':            '64%',
-  'display':          'inline-block',
-  'vertical-align':   'top',
-  'padding':          '5px',
-  'overflow-x':       'scroll',
-  'overflow-y':       'scroll',
-  'height':           '650px',
-  'font':             'Century Gothic',
-}
-
-sel_right = {
-  'width':            '34%',
-  'display':          'inline-block',
-  'vertical-align':   'top',
-  'padding':          '5px',
-  'background-color': 'rgba(234,234,234)',
-  'overflow-x':       'scroll',
-  'overflow-y':       'scroll',
-  'height':           '650px',
-  'font':             'Century Gothic',
-}
-
-sel_full = {
-  'width':            '99%',
-  'display':          'inline-block',
-  'vertical-align':   'top',
-  'padding':          '5px',
-  'background-color': 'rgba(234,234,234)',
-  'overflow-x':       'scroll',
-  'overflow-y':       'scroll',
-  'height':           '650px',
-  'font':             'Century Gothic',
-}
-
-tab_style = {
-  'fontWeight':       'bold',
-}
-
-tab_selected_style = {
-  'fontWeight':       'bold',
-  'backgroundColor':  'blue',
-  'color':            'white',
-}
-
-chk_bx_style = {
-  'display':          'block',
-  'overflow-x':       'scroll',
-  'overflow-y':       'scroll',
-  'height':           '275px',
-}
-
-"""
-# ======================================================================
 # Define tabs - summary
 # ======================================================================
 """
@@ -198,8 +163,8 @@ def get_smry_tab():
   tab_smry = dcc.Tab(
       label = label,
       value = tab,
-      style = tab_style,
-      selected_style = tab_selected_style,
+      style = "tab_style",
+      selected_style = "tab_selected_style",
       children = [
         dcc.Markdown(f"""
         ---
@@ -254,42 +219,45 @@ def get_us_tab():
   tab_0 = dcc.Tab(
     label = label,
     value = tab,
-    style = tab_style,
-    selected_style = tab_selected_style,
+    #style = tab_style,
+    #selected_style = tab_selected_style,
     children = [
-      html.Div([
+      html.Div(
+        className = "sel_left",
+        children = [
         dcc.Graph(
           id     = fig_id,
           figure = upd_us_fig(us_metric, us_metric_ver)
         )
-      ], style = sel_left,
+      ],
       ),
       html.Div(
+        className = "sel_right",
         children = [
           dcc.Markdown(f"""
           ---
           ####  Select Metric
           """),
           dcc.RadioItems(
-            id      = rb_id,
-            options = [{'label': measures_dict[i], 'value': i} for i in us_measure_cols],
-            value   = us_measure_cols[0],
-            labelStyle={'display':'block'}
+            id         = rb_id,
+            options    = [{'label': measures_dict[i], 'value': i} for i in us_measure_cols],
+            value      = us_measure_cols[0],
+            labelStyle = {'display':'block'}
           ),
           dcc.Markdown(f"""
           ---
           ####  Select View
           """),
           dcc.RadioItems(
-            id      = rb2_id,
-            options = [{'label': dim_dict[i], 'value': i} for i in ['state','town']],
-            value   = 'state',
-            labelStyle={'display':'block'}
+            id         = rb2_id,
+            options    = [{'label': dim_dict[i], 'value': i} for i in ['state','town']],
+            value      = 'state',
+            labelStyle = {'display':'block'}
           ),      
           dcc.Markdown(f"""
           ---
           """),
-        ], style = sel_right,
+        ],
       )
     ]
   )
@@ -311,18 +279,20 @@ def get_state_tab():
   tab_1 = dcc.Tab(
     label = label,
     value = tab,
-    style = tab_style,
-    selected_style = tab_selected_style,
+    #style = tab_style,
+    #selected_style = tab_selected_style,
     children = [
       html.Div(
+        className = "sel_left",
         children = [
         dcc.Graph(
           id     = fig_id,
           figure = upd_state_fig(state, state_metric)
         )
-        ], style = sel_left,
+        ],
       ),
       html.Div(
+        className = "sel_right",
         children = [
           dcc.Markdown(f"""
           ---
@@ -346,8 +316,8 @@ def get_state_tab():
           dcc.Markdown(f"""
           ---
           """),
-        ], style = sel_right,
-        )
+        ],
+      )
     ]
   )
       
@@ -369,18 +339,20 @@ def get_county_tab():
   tab_2 = dcc.Tab(
     label = label,
     value = tab,
-    style = tab_style,
-    selected_style = tab_selected_style,
+    #style = tab_style,
+    #selected_style = tab_selected_style,
     children = [
       html.Div(
+        className = "sel_left",
         children = [
           dcc.Graph(
             id     = fig_id,
             figure = upd_town_fig(state, town, town_metric, 'state')
           )
-        ], style = sel_left,
+        ],
       ),
       html.Div(
+        className = "sel_right",
         children = [
           html.Div(
             children = [
@@ -388,14 +360,14 @@ def get_county_tab():
               ---
               ####  Select County/Town
               """),
-              #dcc.Dropdown(
               dcc.Checklist(
-                id      = dd_id,
-                options = [{'label': i, 'value': i} for i in towns],
-                value   = [ towns[0] ],
-                labelStyle={'display':'block'},
+                className   = "chk_bx_style",
+                id          = dd_id,
+                options     = [{'label': i, 'value': i} for i in towns],
+                value       = [ towns[0] ],
+                labelStyle  = {'display':'block'},
               ),
-            ], style = chk_bx_style
+            ],
           ),
           dcc.Markdown(f"""
           ---
@@ -420,7 +392,7 @@ def get_county_tab():
           dcc.Markdown(f"""
           ---
           """),
-        ], style = sel_right,
+        ],
     )]
   )
   return tab_2  
@@ -438,10 +410,11 @@ def get_data_tab():
   tab_3 = dcc.Tab(
     label = label,
     value = tab,
-    style = tab_style,
-    selected_style = tab_selected_style,
+    #style = tab_style,
+    #selected_style = tab_selected_style,
     children = [
       html.Div(
+        className = "sel_full",
         children = [
           dash_table.DataTable(
             id='dat_tab',
@@ -462,7 +435,7 @@ def get_data_tab():
               'color':       'white',
             },
           )
-        ], style = sel_full,
+        ],
       )
     ]
   )
@@ -714,28 +687,6 @@ def upd_state_fig(
 # Do not filter on any dates - this is the most granular metric
 # ======================================================================
 """
-def upd_town_fig_new(
-  state,
-  town,
-  town_metric,
-  town_metric_ver
-):
-  """upd_town_fig - Update a given chart
-  state:  The state to which the town belongs
-  town:   The town to update
-  metric: The metric to update
-  """
-  df_town, curr_date  = get_rlvt_data(
-      df, 'town', town_metric, 
-      town_metric_ver, state)
-
-  if (town_metric_ver == 'town'):
-    df_town = df_town[df_town['town'].isin(town)]
-
-  fig = px.line(df, x='date', y=town_metric, color='town')
-
-  return fig
-
 def upd_town_fig(
   state,
   town,

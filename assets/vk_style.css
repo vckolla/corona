@@ -4,19 +4,58 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-	#color: hotpink;
 	color: blue;
 }
 
-sel-left = {
-  width:          65%;
+.sel_left {
+  width:          64%;
   display:        inline-block;
   vertical-align: top;
+  padding:        5px;
+  overflow-x:     scroll;
+  overflow-y:     scroll;
+  height:         650px;
+  font:           "Century Gothic";
 }
 
-sel-right = {
-  width:          30%;
+.sel_right {
+  width:          34%;
   display:        inline-block;
   vertical-align: top;
+  padding:        5px;
+  overflow-x:     scroll;
+  overflow-y:     scroll;
+  height:         650px;
+  font:           "Century Gothic";
+  background-color: darkgray;
+}
+
+.sel_full {
+  width:          99%;
+  display:        inline-block;
+  vertical-align: top;
+  padding:        5px;
+  overflow-x:     scroll;
+  overflow-y:     scroll;
+  height:         650px;
+  font:           "Century Gothic";
+  background-color: darkgray;
+}
+
+.tab_style {
+  font-weight:      bold;
+}
+
+.tab_selected_style {
+  font-weight:      bold;
+  background-color: cornflowerblue;
+  color:            white;
+}
+
+.chk_bx_style {
+  display:    block;
+  overflow-x: scroll;
+  overflow-y: scroll;
+  height:     275px;
 }
 
