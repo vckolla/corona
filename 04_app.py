@@ -730,18 +730,18 @@ def upd_town_fig(
     y_title = f"{town_metric.upper()} in US"
     x       = df_town['date']
     y       = df_town[town_metric]
-    data.append({'x': x, 'y': y, 'mode': mode, 'name': 'US'})
+    data.append({'x': x, 'y': y, 'mode': mode, 'name': y_title})
   elif (town_metric_ver == 'state'):
     y_title = f"{town_metric.upper()} in {state}"
     x       = df_town['date']
     y       = df_town[town_metric]
-    data.append({'x': x, 'y': y, 'mode': mode, 'name': state})
+    data.append({'x': x, 'y': y, 'mode': mode, 'name': y_title})
   else:
-    y_title = f"{town_metric.upper()} in {town}"
     for t in town:
+      y_title = f"{town_metric.upper()} in {t}"
       x = df_town['date']
       y = df_town[df_town['town'] == t][town_metric]
-      data.append({'x':x, 'y':y, 'mode': mode, 'name': t})
+      data.append({'x':x, 'y':y, 'mode': mode, 'name': y_title})
   
   fig = get_trend(data, x_title, y_title)
   
