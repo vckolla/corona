@@ -84,12 +84,14 @@ tab_dict = {
 }
 
 dim_desc = [
+  'US',
   'State ',
   'Town ',
   'Date '
 ]
 
 dim_cols = [
+  'us',
   'state',
   'town',
   'date',
@@ -347,7 +349,7 @@ def get_county_tab():
         children = [
           dcc.Graph(
             id     = fig_id,
-            figure = upd_town_fig(state, town, town_metric, 'state')
+            figure = upd_town_fig(state, town, town_metric, 'us')
           )
         ],
       ),
@@ -385,7 +387,7 @@ def get_county_tab():
           """),
           dcc.RadioItems(
             id      = rb2_id,
-            options = [{'label': dim_dict[i], 'value': i} for i in ['state','town']],
+            options = [{'label': dim_dict[i], 'value': i} for i in ['us','state','town']],
             value   = 'state',
             labelStyle={'display':'block'}
           ),
@@ -395,7 +397,7 @@ def get_county_tab():
         ],
     )]
   )
-  return tab_2  
+  return tab_2
 
 """
 # ======================================================================
@@ -417,7 +419,7 @@ def get_data_tab():
         className = "sel_full",
         children = [
           dash_table.DataTable(
-            id='dat_tab',
+            id      = 'dat_tab',
             columns = [
                 {'name': i, "id": i} for i in (df_rcnt.columns)
             ],
@@ -428,7 +430,7 @@ def get_data_tab():
                 'if':{'row_index':'odd'},
                 'backgroundColor': 'rgb(248,248,248)'
             }],
-            style_cell={'fontSize':14, 'font-family':'Century Gothic'},
+            style_cell = {'fontSize':14, 'font-family':'Century Gothic'},
             style_header={
               'backgroundColor': 'rgb(0, 102, 255)',
               'fontWeight':      'bold',
@@ -594,7 +596,10 @@ def get_rlvt_data(
     
     return df_out
   
-  df_out    = df[dim_cols + [metric]]
+  d_cols = dim_cols
+  if ('us' in d_cols): d_cols.remove('us')
+
+  df_out    = df[ d_cols + [metric] ]
   curr_date = df_out['date'].max()
 
   if (viz_type in [ 'us'] ):
@@ -608,9 +613,12 @@ def get_rlvt_data(
     df_out = df_out[df_out['state'] == filter_val]
     
   elif (viz_type == 'town'):
-    df_out = df_out[df_out['state'] == filter_val]
-    
-    if (metric_ver == 'state'):
+    if (metric_ver == 'us'):
+      df_out = summarize_df(df_out, metric, ['date'])
+    else:
+      df_out = df_out[df_out['state'] == filter_val]
+
+    if (metric_ver in ['state']):
       df_out = summarize_df(df_out, metric, ['date', metric_ver])
 
   if (viz_type in [ 'us', 'state' ]):
@@ -718,7 +726,12 @@ def upd_town_fig(
   mode = 'lines+markers'
 
   x_title = f"Date"
-  if (town_metric_ver == 'state'):
+  if (town_metric_ver == 'us'):
+    y_title = f"{town_metric.upper()} in US"
+    x       = df_town['date']
+    y       = df_town[town_metric]
+    data.append({'x': x, 'y': y, 'mode': mode, 'name': 'US'})
+  elif (town_metric_ver == 'state'):
     y_title = f"{town_metric.upper()} in {state}"
     x       = df_town['date']
     y       = df_town[town_metric]
