@@ -47,6 +47,7 @@ TOP = r"C:/Users/vishk/Desktop/WIP/2020/2020 Q1/07 - Self Learning"
 sys.path.append(f"{TOP}/lib")
 os.environ["TOP"] = TOP
 from bootstrap import *
+from IPython.core.display import display
 
 """
 # ======================================================================
@@ -65,8 +66,8 @@ df['date'] = df['date'].astype('datetime64[ns]')
 df         = df[df['date'] >= min_date]
 
 rcnt_dt    = df['date'].max().date()
-states     = df['state'].unique()
-towns      = df['town'].unique()
+states     = sorted(df['state'].unique())
+towns      = sorted(df['town'].unique())
 
 df_rcnt    = df[df['date'] == rcnt_dt]
 
@@ -76,25 +77,32 @@ df_rcnt    = df[df['date'] == rcnt_dt]
 # ======================================================================
 """
 tab_dict = {
-  'tab_smry': f"Summary",
-  'tab_0':    f"US 'High Risk'",
-  'tab_1':    f"State 'High Risk'",
-  'tab_2':    f"Over time trends",
-  'tab_3':    f"Data",
+  'tab_smry':    f"Summary",
+  'tab_distrib': f"Top",
+  'tab_trends':  f"Trends",
+  'tab_data':    f"Data",
 }
 
 dim_desc = [
-  'US',
-  'State ',
-  'Town ',
-  'Date '
+  'State',
+  'County/Town',
+  'Date'
 ]
 
 dim_cols = [
-  'us',
   'state',
   'town',
   'date',
+]
+
+view_desc = [
+  'US',
+  'State'
+]
+
+views = [
+  'us',
+  'state'
 ]
 
 measure_cols = [
@@ -133,6 +141,8 @@ state_measure_cols = [
 
 dim_dict          = dict(zip(dim_cols, dim_desc))
 measures_dict     = dict(zip(measure_cols, measure_desc))
+views_dict        = dict(zip(views, view_desc))
+
 town_measure_cols = measure_cols
 cols              = dim_cols + measure_cols
 
@@ -151,8 +161,67 @@ town              = def_town
 us_metric         = def_metric
 us_metric_ver     = def_ver
 state_metric      = def_metric
-town_metric       = def_metric
-town_metric_ver   = def_ver
+trend_metric       = def_metric
+trend_metric_ver   = def_ver
+
+"""
+# ======================================================================
+# Update summary tab
+# ======================================================================
+"""
+def upd_md(df, df_rcnt):
+  min_date   = df['date'].min().date()
+  max_date   = df['date'].max().date()
+  days       = len(df['date'].unique())
+  num_states = len(df['state'].unique())
+  states     = sorted(df['state'].unique())
+  towns      = sorted(df['town'].unique())
+  num_towns  = len(df['town'].unique())
+  population = df_rcnt['population'].sum()
+  cum_incids = df_rcnt['incidence'].sum()
+  incid_rate = (cum_incids * 100) / population
+  incid_inc  = df_rcnt['incidence_inc'].sum()
+  cum_deaths = df_rcnt['deaths'].sum()
+  death_rate = (cum_deaths * 100) / cum_incids
+
+  md_txt = f"""
+  ---
+
+  # US COVID 19 Tracker (as of {rcnt_dt})
+
+  ---
+
+  ## Data Summary
+
+
+  |Metric|     |Value|
+  |---:| :-: | :-: |
+  | | | |
+  | *From Date:*          || **{min_date}** |
+  | *To Date:*            || **{max_date}** |
+  | *Days:*                             || **{days}** |
+  | *# States (1):*    || **{num_states}** |
+  | *# Counties (2):*  || **{num_towns:,.0f}**  |
+  | *Population:*  || **{population:,.0f}**  |
+  | *Cumulative Incidents:*          || **{cum_incids:,.0f}**  |
+  | *Incidents rate (pct):*          || **{incid_rate:,.2f}**  |
+  | *Incidents increase (from prior day):* || **{incid_inc:,.0f}**  |
+  | *Cumulative Deaths:*             || **{cum_deaths:,.0f}**  |
+  | *Death rate (pct):*          || **{death_rate:,.2f}**  |
+
+  ---
+  
+  Source: ***[Corona John Hopkins University Git Repo] (https://github.com/CSSEGISandData/COVID-19) ***
+  
+  ---
+  
+  Built on: ***[Python Dash framework] (https://plotly.com/dash/)***
+
+  ***(c) 2020 me:dha:.ai***
+
+  ---
+  """  
+  return md_txt
 
 """
 # ======================================================================
@@ -160,244 +229,75 @@ town_metric_ver   = def_ver
 # ======================================================================
 """
 def get_smry_tab():
-  tab   = 'tab_smry'
-  label = tab_dict[tab]
-  tab_smry = dcc.Tab(
-      label = label,
-      value = tab,
-      className="custom-tab",
-      selected_className="custom-tab--selected",
-      children = [
-        dcc.Markdown(f"""
-        ---
-
-        # US COVID 19 Tracker (as of {rcnt_dt})
-        
-        ---
-        
-        ## Data Summary
-        
-        
-        |Metric|     |Value|
-        |---:| :-: | :-: |
-        | | | |
-        | *From Date:*          || **{df['date'].min().date()}** |
-        | *To Date:*            || **{df['date'].max().date()}** |
-        | *States analyzed:*    || **{len(states)}** |
-        | *Counties analyzed:*  || **{len(towns):,.0f}**  |
-        | *Incidents:*          || **{df_rcnt['incidence'].sum():,.0f}**  |
-        | *Incidents increase:* || **{df_rcnt['incidence_inc'].sum():,.0f}**  |
-        | *Deaths:*             || **{df_rcnt['deaths'].sum():,.0f}**  |
-
-        ---
-        
-        Source: ***[Corona John Hopkins University Git Repo] (https://github.com/CSSEGISandData/COVID-19) ***
-        
-        ---
-        Built on: ***[Python Dash framework] (https://plotly.com/dash/)***
-        
-        
-        ***(c) 2020 me:dha:.ai***
-
-        ---
-        """
-        )
-      ]
-    )
-  return tab_smry
+  tab_name = 'tab_smry'
+  tab_label = tab_dict[tab_name]
+  md_id = f"{tab_name}_md"
+  tab = dcc.Tab(
+    value = tab_name,
+    label = tab_label,
+    className = "custom-tab",
+    selected_className = "custom-tab--selected",
+    children = [
+      dcc.Markdown(
+        id = f"{md_id}",
+        children = upd_md(df, df_rcnt)          
+      )
+    ]
+  )
+  return tab
 
 """
 # ======================================================================
-# Define tabs - US
+# Define tabs - Distributions
 # ======================================================================
 """
-def get_us_tab():
-  tab    = 'tab_0'
-  label  = tab_dict[tab]
-  rb_id  = 'us_metric_rb'
-  rb2_id = 'us_metric_ver_rb'
-  fig_id = f"{tab}_fig"
+def get_distrib_tab():
+  tab_name = 'tab_distrib'
+  tab_label = tab_dict[tab_name]
+  fig_id = f"{tab_name}_fig"
   
-  tab_0 = dcc.Tab(
-    label = label,
-    value = tab,
+  tab = dcc.Tab(
+    value = tab_name,
+    label = tab_label,
     className="custom-tab",
     selected_className="custom-tab--selected",
     children = [
-      html.Div(
-        className = "sel_left",
-        children = [
-        dcc.Graph(
-          id     = fig_id,
-          figure = upd_us_fig(us_metric, us_metric_ver)
-        )
-      ],
-      ),
-      html.Div(
-        className = "sel_right",
-        children = [
-          dcc.Markdown(f"""
-          ---
-          ####  Select Metric
-          """),
-          dcc.RadioItems(
-            id         = rb_id,
-            options    = [{'label': measures_dict[i], 'value': i} for i in us_measure_cols],
-            value      = us_measure_cols[0],
-            labelStyle = {'display':'block'}
-          ),
-          dcc.Markdown(f"""
-          ---
-          ####  Select View
-          """),
-          dcc.RadioItems(
-            id         = rb2_id,
-            options    = [{'label': dim_dict[i], 'value': i} for i in ['state','town']],
-            value      = 'state',
-            labelStyle = {'display':'block'}
-          ),      
-          dcc.Markdown(f"""
-          ---
-          """),
-        ],
+      dcc.Graph(
+        id     = fig_id,
+        #figure = upd_top_fig(us_metric, us_metric_ver)
       )
     ]
   )
   
-  return tab_0
+  return tab
 
 """
 # ======================================================================
-# Define tabs - State
+# Define tabs - Trends
 # ======================================================================
 """
-def get_state_tab():
-  tab    = 'tab_1'
-  label  = tab_dict[tab]
-  dd_id  = 'state_metric_dd'
-  rb_id  = 'state_metric_rb'
-  fig_id = f"{tab}_fig"
+def get_trends_tab():
+  tab_name = 'tab_trends'
+  tab_label = tab_dict[tab_name]
+  fig_id = f"{tab_name}_fig"
 
-  tab_1 = dcc.Tab(
-    label = label,
-    value = tab,
+  tab = dcc.Tab (
+    value = tab_name,
+    label = tab_label,
     className="custom-tab",
     selected_className="custom-tab--selected",
     children = [
       html.Div(
-        className = "sel_left",
-        children = [
-        dcc.Graph(
-          id     = fig_id,
-          figure = upd_state_fig(state, state_metric)
-        )
-        ],
-      ),
-      html.Div(
-        className = "sel_right",
-        children = [
-          dcc.Markdown(f"""
-          ---
-          ####  Select State
-          """),
-          dcc.Dropdown(
-            id      = dd_id,
-            options = [{'label': i, 'value': i} for i in states],
-            value   = states[0]
-          ),
-          dcc.Markdown(f"""
-          ---
-          ####  Select Metric
-          """),
-          dcc.RadioItems(
-            id      = rb_id,
-            options = [{'label': measures_dict[i], 'value': i} for i in state_measure_cols],
-            value   = state_measure_cols[0],
-            labelStyle={'display':'block'}
-          ),
-          dcc.Markdown(f"""
-          ---
-          """),
-        ],
-      )
-    ]
-  )
-      
-  return tab_1
-
-"""
-# ======================================================================
-# Define tabs - County
-# ======================================================================
-"""
-def get_county_tab():
-  tab    = 'tab_2'
-  label  = tab_dict[tab]
-  dd_id  = 'town_metric_dd'
-  rb_id  = 'town_metric_rb'
-  rb2_id = 'town_metric_ver_rb'
-  fig_id = f"{tab}_fig"
-
-  tab_2 = dcc.Tab(
-    label = label,
-    value = tab,
-    className="custom-tab",
-    selected_className="custom-tab--selected",
-    children = [
-      html.Div(
-        className = "sel_left",
         children = [
           dcc.Graph(
             id     = fig_id,
-            figure = upd_town_fig(state, town, town_metric, 'us')
+            #figure = upd_trend_fig('us', state, town, trend_metric)
           )
         ],
       ),
-      html.Div(
-        className = "sel_right",
-        children = [
-          html.Div(
-            children = [
-              dcc.Markdown(f"""
-              ---
-              ####  Select County/Town
-              """),
-              dcc.Checklist(
-                className   = "chk_bx_style",
-                id          = dd_id,
-                options     = [{'label': i, 'value': i} for i in towns],
-                value       = [ towns[0] ],
-                labelStyle  = {'display':'block'},
-              ),
-            ],
-          ),
-          dcc.Markdown(f"""
-          ---
-          ####  Select Metric
-          """),
-          dcc.RadioItems(
-            id      = rb_id,
-            options = [{'label': measures_dict[i], 'value': i} for i in town_measure_cols],
-            value   = town_measure_cols[0],
-            labelStyle={'display':'block'}
-          ),
-          dcc.Markdown(f"""
-          ---
-          ####  Select View
-          """),
-          dcc.RadioItems(
-            id      = rb2_id,
-            options = [{'label': dim_dict[i], 'value': i} for i in ['us','state','town']],
-            value   = 'state',
-            labelStyle={'display':'block'}
-          ),
-          dcc.Markdown(f"""
-          ---
-          """),
-        ],
-    )]
+    ]
   )
-  return tab_2
+  return tab
 
 """
 # ======================================================================
@@ -405,59 +305,36 @@ def get_county_tab():
 # ======================================================================
 """
 def get_data_tab():
-  tab        = 'tab_3'
-  label      = tab_dict[tab]
-  st_dd_id   = 'data_state_metric_dd'
-  twn_dd_id  = 'data_town_metric_dd'
-  tab_3 = dcc.Tab(
-    label = label,
-    value = tab,
-    className="custom-tab",
-    selected_className="custom-tab--selected",
+  tab_name = 'tab_data'
+  tab_label = tab_dict[tab_name]
+  tab = dcc.Tab(
+    value = tab_name,
+    label = tab_label,
+    className = "custom-tab",
+    selected_className = "custom-tab--selected",
     children = [
-      html.Div(
-        className = "sel_full",
-        children = [
-          dash_table.DataTable(
-            id      = 'dat_tab',
-            columns = [
-                {'name': i, "id": i} for i in (df_rcnt.columns)
-            ],
-            page_current      = 0,
-            page_size         = 15,
-            page_action       = 'custom',
-            style_data_conditional=[{
-                'if':{'row_index':'odd'},
-                'backgroundColor': 'rgb(248,248,248)'
-            }],
-            style_cell = {'fontSize':14, 'font-family':'Century Gothic'},
-            style_header={
-              'backgroundColor': 'rgb(0, 102, 255)',
-              'fontWeight':      'bold',
-              'color':       'white',
-            },
-          )
+      dash_table.DataTable(
+        id      = 'dat_tab',
+        columns = [
+            {'name': i, "id": i} for i in (df_rcnt.columns)
         ],
+        page_current      = 0,
+        page_size         = 15,
+        page_action       = 'custom',
+        style_data_conditional=[{
+            'if':{'row_index':'odd'},
+            'backgroundColor': 'rgb(248,248,248)'
+        }],
+        style_cell = {'fontSize':14, 'font-family':'Century Gothic'},
+        style_header={
+          'backgroundColor': 'rgb(0, 102, 255)',
+          'fontWeight':      'bold',
+          'color':       'white',
+        },
       )
-    ]
+    ],
   )
-  return tab_3
-
-"""
-# ======================================================================
-# Prep main layout
-# ======================================================================
-"""
-def get_tabs():
-  tabs = []
-
-  tabs.append(get_smry_tab())
-  tabs.append(get_us_tab())
-  tabs.append(get_state_tab())
-  tabs.append(get_county_tab())
-  tabs.append(get_data_tab())
-
-  return tabs
+  return tab
 
 """
 # ======================================================================
@@ -563,63 +440,68 @@ def get_trend(
 
 """
 # ======================================================================
+# summarize_df - summarize data
+# ======================================================================
+"""
+def summarize_df(df, metric, group_by_cols):
+  avg_metrics = [ 'incidence_inc_pct',  'incidence_rate_pct', 'death_rate_pct' ]
+  sum_metrics = [ 'population', 'incidence', 'incidence_inc', 'deaths' ] 
+  
+  if (metric in avg_metrics):
+    df_out = df.groupby(group_by_cols)[metric].agg('mean')
+  elif (metric in sum_metrics):
+    df_out = df.groupby(group_by_cols)[metric].sum()
+    
+  df_out = pd.DataFrame(df_out)
+  df_out = df_out.reset_index()
+  
+  return df_out
+
+"""
+# ======================================================================
 # Helper function - get relevant data
 # ======================================================================
 """
 def get_rlvt_data(
   df,
   viz_type,
+  view,
   metric,
-  metric_ver = 'town',
-  filter_val = 'none'
+  cb_list = None,
 ):
   """get_rlvt_data - get relevant data
   df:          input data frame
   metric_type: top (towns) or all towns or all data points
   metric:      the metric value
-  filter_col:  the column to filter on
   filter_val:  the value to filter on
   """
   num_top_points = 20
   
-  def summarize_df(df, metric, group_by):
-    avg_metrics = [ 'incidence_inc_pct',  'incidence_rate_pct', 'death_rate_pct' ]
-    sum_metrics = [ 'population', 'incidence', 'incidence_inc', 'deaths' ] 
-    
-    if (metric in avg_metrics):
-      df_out = df.groupby(group_by)[metric].agg('mean')
-    elif (metric in sum_metrics):
-      df_out = df.groupby(group_by)[metric].sum()
-      
-    df_out = pd.DataFrame(df_out)
-    df_out = df_out.reset_index()
-    
-    return df_out
-  
-  d_cols = dim_cols
-  if ('us' in d_cols): d_cols.remove('us')
-
-  df_out    = df[ d_cols + [metric] ]
+  df_out    = df[ dim_cols + [metric] ]
   curr_date = df_out['date'].max()
 
-  if (viz_type in [ 'us'] ):
-    df_out    = df_out[df_out['date'] == curr_date]
+  if (viz_type == 'us' ):
+    df_out = df_out[df_out['date'] == curr_date]
     
-    if (metric_ver == 'state'):
-      df_out = summarize_df(df_out, metric, metric_ver)
+    if (view == 'state'):  group_by = 'state'
+    elif (view == 'town'): group_by = 'town'
+    df_out = summarize_df(df_out, metric, group_by)
       
   elif (viz_type == 'state'):
     df_out = df_out[df_out['date'] == curr_date]
-    df_out = df_out[df_out['state'] == filter_val]
+    df_out = df_out[df_out['state'] == cb_list]
     
-  elif (viz_type == 'town'):
-    if (metric_ver == 'us'):
-      df_out = summarize_df(df_out, metric, ['date'])
-    else:
-      df_out = df_out[df_out['state'] == filter_val]
+  elif (viz_type == 'trend'):
+    group_by = ['date']
+  
+    if (view == 'us'):
+      df_out = df_out[(df_out['state']).isin(cb_list)]
+      group_by += ['state']
 
-    if (metric_ver in ['state']):
-      df_out = summarize_df(df_out, metric, ['date', metric_ver])
+    elif (view == 'state'):
+      df_out = df_out[(df_out['town']).isin(cb_list)]
+
+    df_out = summarize_df(df_out, metric, group_by)
 
   if (viz_type in [ 'us', 'state' ]):
     # get top 20 by metric
@@ -645,107 +527,94 @@ def cap_it(y, cap_val):
   if (y >= cap_val): return cap_val
   if (y <= -cap_val): return -cap_val
   else: return y
+  return None
 
 """
 # ======================================================================
-# Helper function - upd_us_fig
-# Make the title more contextual based on the metric
+# Prep main layout
 # ======================================================================
 """
-def upd_us_fig(
-  us_metric,
-  us_metric_ver
-):
-  """upd_fig - Update a given chart
-  metric: The metric to update
-  """
-  df_us, curr_date = get_rlvt_data(
-      df, 'us', 
-      us_metric, us_metric_ver)
+def get_tabs():
+  tabs = []
 
-  x_top   = df_us[us_metric]
-  y_top   = df_us[us_metric_ver]
-  x_title = f"Cumulative {us_metric.upper()} as of {curr_date}"
-  y_title = f""
-  fig = get_top_fig(x_top, y_top, x_title, y_title)
+  tabs.append(get_smry_tab())
+  tabs.append(get_distrib_tab())
+  tabs.append(get_trends_tab())
+  #tabs.append(get_data_tab())
 
-  return fig
+  tabs_content = [
+    dcc.Tabs(
+      id    = 'tabs',
+      value = 'tab_smry',
+      parent_className='custom-tabs',
+        children=tabs
+    )
+  ]      
 
-"""
-# ======================================================================
-# Helper function - upd_state_fig
-# Make the title more contextual based on the metric
-# ======================================================================
-"""
-def upd_state_fig(
-  state,
-  state_metric
-):
-  """upd_fig - Update a given chart
-  state:        The town to update
-  state_metric: The metric to update
-  """
-  df_state, curr_date = get_rlvt_data(
-      df, 'state', 
-      state_metric, 'state', state)
+  return tabs_content
 
-  x_top   = df_state[state_metric]
-  y_top   = df_state['town']
-  x_title = f"Cumulative {state_metric.upper()} as of {curr_date}"
-  y_title = f""
-  fig = get_top_fig(x_top, y_top, x_title, y_title)
+def get_controls():
+  view        = 'us'
+  display     = states
+  view_rb_id  = 'view_rb_cntrl'
+  state_dd_id = 'state_cntrl'
+  chk_bx_id   = 'chk_bx_cntrl'
+  metric_id   = 'metric_cntrl'
 
-  return fig
-
-"""
-# ======================================================================
-# Helper function - upd_town_fig
-# Make the title more contextual based on the metric
-# Do not filter on any dates - this is the most granular metric
-# ======================================================================
-"""
-def upd_town_fig(
-  state,
-  town,
-  town_metric,
-  town_metric_ver
-):
-  """upd_town_fig - Update a given chart
-  state:  The state to which the town belongs
-  town:   The town to update
-  metric: The metric to update
-  """
-  df_town, curr_date  = get_rlvt_data(
-      df, 'town', town_metric, 
-      town_metric_ver, state)
-
-  if (town_metric_ver == 'town'):
-    df_town = df_town[df_town['town'].isin(town)]
+  controls = [
+    dcc.Markdown(f"""
+    ---
+    ####  Select View
+    """),
+    dcc.RadioItems(
+      id         = view_rb_id,
+      options    = [{'label': views_dict[i], 'value': i} for i in views],
+      value      = view,
+      labelStyle = {'display':'in-line block'}
+    ),
     
-  data = []
-  mode = 'lines+markers'
+    html.Div(
+      id = 'state_dd_comp',
+      style = {'display': 'block'},
+      children = [
+        dcc.Markdown(f"""
+        ---
+        ####  Select State
+        """),
+        dcc.Dropdown(
+          id      = state_dd_id,
+          options = [{'label': i, 'value': i} for i in states],
+          value   = states[0]
+        ),
+      ], 
+    ),
 
-  x_title = f"Date"
-  if (town_metric_ver == 'us'):
-    y_title = f"{town_metric.upper()} in US"
-    x       = df_town['date']
-    y       = df_town[town_metric]
-    data.append({'x': x, 'y': y, 'mode': mode, 'name': y_title})
-  elif (town_metric_ver == 'state'):
-    y_title = f"{town_metric.upper()} in {state}"
-    x       = df_town['date']
-    y       = df_town[town_metric]
-    data.append({'x': x, 'y': y, 'mode': mode, 'name': y_title})
-  else:
-    for t in town:
-      y_title = f"{town_metric.upper()} in {t}"
-      x = df_town['date']
-      y = df_town[df_town['town'] == t][town_metric]
-      data.append({'x':x, 'y':y, 'mode': mode, 'name': y_title})
-  
-  fig = get_trend(data, x_title, y_title)
-  
-  return fig
+    dcc.Markdown(f"""
+    ---
+    ####  Select State / Town
+    """),
+    dcc.Checklist(
+      className   = "chk_bx_style",
+      id          = chk_bx_id,
+      options     = [{'label': i, 'value': i} for i in display],
+      labelStyle  = {'display':'block'},
+    ),
+
+    dcc.Markdown(f"""
+    ---
+    ####  Select Metric
+    """),
+    dcc.RadioItems(
+      id          = metric_id,
+      options     = [{'label': measures_dict[i], 'value': i} for i in town_measure_cols],
+      value       = town_measure_cols[0],
+      labelStyle  = {'display':'block'}
+    ),
+    dcc.Markdown(f"""
+    ---
+    """),  
+  ]
+  return controls
 
 """
 # ======================================================================
@@ -754,101 +623,84 @@ def upd_town_fig(
 """
 app = dash.Dash(__name__)
 app.config.suppress_callback_exceptions = True
-app.layout = html.Div([
-    dcc.Tabs(
-      id    = 'tabs', 
-      value = 'tab_smry',
-      parent_className='custom-tabs',
-        children=get_tabs()
-      )
-  ], style={'width': '95%'}
-)
+app.layout = html.Div(
+  children = [
+    html.Div(
+      className = "app_left",
+      children  = get_tabs()
+    ),
 
-"""
-# ======================================================================
-# US fig call back
-# ======================================================================
-"""
-@app.callback(
-  Output('tab_0_fig', 'figure'),
-  [
-    Input('us_metric_rb',     'value'),
-    Input('us_metric_ver_rb', 'value'),
+    html.Div(
+      className = "app_right",
+      children  = get_controls()
+    )
   ]
 )
-def upd_us_fig_cb(
-  us_metric,
-  us_metric_ver
-):
-  comp = upd_us_fig(us_metric, us_metric_ver)
-  return comp
 
 """
 # ======================================================================
-# State fig call back
-# ======================================================================
-"""
-@app.callback(
-  Output('tab_1_fig', 'figure'),
-  [
-    Input('state_metric_dd', 'value'),
-    Input('state_metric_rb', 'value'),
-  ]
-)
-def upd_state_fig_cb(
-  state,
-  state_metric
-):
-  comp = upd_state_fig(state, state_metric)
-
-  return comp
-
-"""
-# ======================================================================
-# County fig call back
+# View
 # ======================================================================
 """
 @app.callback(
   [
-     Output('tab_2_fig',      'figure'),
-     Output('town_metric_dd', 'options'),
+    Output('state_dd_comp',   'style'),
+    Output('chk_bx_cntrl',    'options'),
+    Output('tab_smry_md',     'children'),
+    Output('tab_distrib_fig', 'figure'),
+    Output('tab_trends_fig',  'figure'),
   ],
   [
-    Input('state_metric_dd',    'value'),
-    Input('town_metric_dd',     'value'),
-    Input('town_metric_rb',     'value'),
-    Input('town_metric_ver_rb', 'value')
+    Input('view_rb_cntrl', 'value'),
+    Input('state_cntrl',   'value'),
+    Input('chk_bx_cntrl',  'value'),
+    Input('metric_cntrl',  'value'),
   ]
 )
-def upd_town_fig_cb(
+def upd_app_cb(
+  view,
   state,
-  town,
-  town_metric,
-  town_metric_ver,
+  cb_list,
+  metric,
 ):
-  comp    =  upd_town_fig(state, town, town_metric, town_metric_ver)
-  df_town = df[df['state'] == state]
-  towns   = df_town['town'].unique()
-  options = [{'label': i, 'value': i} for i in towns]
-  
-  return comp, options
+  if (cb_list == None):
+    cb_list = ['None']
 
-"""
-# ======================================================================
-# Data table call back
-# ======================================================================
-"""
-@app.callback(
-    Output('dat_tab', 'data'),
-    [
-        Input('dat_tab', "page_current"),
-        Input('dat_tab',  "page_size")
+  p_str = f"""
+  view    = {view}
+  state   = {state}
+  cb_list = {cb_list}
+  metric  = {metric}
+  """
+  #p_print(p_str)
+
+  display       = states
+  style         = {'display': 'none'}
+  group_by_cols = []
+
+  if (view == 'us'):
+    pass
+  elif (view == 'state'):
+    display = sorted(df[df['state'] == state]['town'].unique())
+    style = {'display': 'block'}
+
+  #display = ['All', 'None'] + display
+  options = [ {'label': i, 'value': i} for i in display ]
+
+  df_st   = df[(df['state']).isin(cb_list)]
+  df_cnty = df[
+    (df['town']).isin(cb_list) & 
+    (df['state'] == state)
     ]
-)
-def update_table(page_current, page_size):
-  return df_rcnt.iloc[
-      page_current*page_size : (page_current+ 1)*page_size
-  ].to_dict('records')
+  df_st_curr   = df_st[df_st['date'] == rcnt_dt]
+  df_cnty_curr = df_cnty[df_cnty['date'] == rcnt_dt]
+  
+  if (view == 'us'):
+    md_txt = upd_md(df_st, df_st_curr)
+  elif (view == 'state'):
+    md_txt = upd_md(df_cnty, df_cnty_curr)
+
+  return style, options, md_txt, None, None
 
 """
 # ======================================================================

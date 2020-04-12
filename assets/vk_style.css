@@ -7,7 +7,7 @@ h1, h2, h3, h4, h5, h6 {
   color: royalblue;
 }
 
-.sel_left {
+.app_left {
   width:          64%;
   display:        inline-block;
   vertical-align: top;
@@ -18,7 +18,7 @@ h1, h2, h3, h4, h5, h6 {
   font:           "Century Gothic";
 }
 
-.sel_right {
+.app_right {
   width:          34%;
   display:        inline-block;
   vertical-align: top;
@@ -30,7 +30,7 @@ h1, h2, h3, h4, h5, h6 {
   background-color: rgba(234,234,234);
 }
 
-.sel_full {
+.app_full {
   width:          99%;
   display:        inline-block;
   vertical-align: top;
@@ -56,7 +56,7 @@ h1, h2, h3, h4, h5, h6 {
   display:    block;
   overflow-x: scroll;
   overflow-y: scroll;
-  height:     275px;
+  height:     125px;
 }
 
 .custom-tabs-container {
