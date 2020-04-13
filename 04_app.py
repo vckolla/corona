@@ -78,7 +78,7 @@ df_rcnt    = df[df['date'] == rcnt_dt]
 """
 tab_dict = {
   'tab_smry':    f"Summary",
-  'tab_distrib': f"Top",
+  'tab_top': f"Top",
   'tab_trends':  f"Trends",
   'tab_data':    f"Data",
 }
@@ -176,10 +176,10 @@ def upd_app(
   state_dd_style  = {'display': 'none'}
   cb_style        = {'display': 'none'}
   metric_style    = {'display': 'none'}
-  cb_options      = None
+  vw_opt_val      = views.copy()
   md_txt          = ""
-  top_fig         = None
-  trends_fig      = None
+  fig_top         = None
+  fig_trends      = None
   group_by_cols   = []
   rcnt_dt         = df['date'].max().date()
 
@@ -211,53 +211,112 @@ def upd_app(
   df_sts_curr   = df_sts[df_sts['date'] == rcnt_dt]
   df_towns_curr = df_towns[df_towns['date'] == rcnt_dt]
 
+  cb_opt_val    = states
+
+  vw_opt_val = views.copy()
   if (tab == 'tab_smry'):
     if (view == 'us'):
-      print("000")
       state_dd_style  = {'display': 'none'}
       cb_style        = {'display': 'none'}
       metric_style    = {'display': 'none'}
-
-      cb_options      = states
+      cb_opt_val      = states
 
       df_md           = df_all
       df_md_curr      = df_all_curr
 
     elif (view == 'state'):
-      print("222")
       state_dd_style  = {'display': 'none'}
       cb_style        = {'display': 'block'}
       metric_style    = {'display': 'none'}
-
-      cb_options      = states
-
+      vw_opt_val      = views
+      cb_opt_val      = states
       df_md           = df_sts
       df_md_curr      = df_sts_curr
 
-      #print(df_md.shape, df_md_curr.shape)
-      #print(cb_options)
-
     elif (view == 'town'):
-      print("222")
       state_dd_style  = {'display': 'block'}
       cb_style        = {'display': 'block'}
       metric_style    = {'display': 'none'}
-
-      cb_options      = towns
+      cb_opt_val      = towns
 
       df_md           = df_towns
       df_md_curr      = df_towns_curr
+    
+    md_txt = get_md(df_md, df_md_curr)
+  elif (tab == 'tab_top'):
+    vw_opt_val = ['us', 'state']
+    if (view == 'us'):
+      print('111-1')
+      state_dd_style  = {'display': 'none'}
+      cb_style        = {'display': 'none'}
+      metric_style    = {'display': 'block'}
+      df_rlvt         = df_all
+      y_col           = 'state'
 
-      #print(df_md.shape, df_md_curr.shape)
-      #print(cb_options)
+    elif (view == 'state'):
+      state_dd_style  = {'display': 'block'}
+      cb_style        = {'display': 'none'}
+      metric_style    = {'display': 'block'}
+      df_rlvt         = df_st_curr
+      y_col           = 'town'
 
-  #cb_options = ['All', 'None'] + cb_options
-  options = [ {'label': i, 'value': i} for i in cb_options ]
-  md_txt = get_md(df_md, df_md_curr)
+    viz_type    = 'top'
+    df_top      = get_rlvt_data(df_rlvt, viz_type, view, metric, cb_list)
+    x_top       = df_top[metric]
+    y_top       = df_top[y_col]
+    x_title     = f"Cumulative {metric.upper()} as of {rcnt_dt}"
+    y_title     = f""
+    fig_top     = get_top_fig(x_top, y_top, x_title, y_title)
+    print(fig_top)
+  elif (tab == 'tab_trends'):
+    if (view == 'us'):
+      state_dd_style  = {'display': 'none'}
+      cb_style        = {'display': 'none'}
+      metric_style    = {'display': 'none'}
+      cb_opt_val      = states
 
-  #print(options)
+      df_rlvt         = df_all
 
-  return state_dd_style, cb_style, metric_style, options, md_txt, top_fig, trends_fig
+    elif (view == 'state'):
+      state_dd_style  = {'display': 'none'}
+      cb_style        = {'display': 'block'}
+      metric_style    = {'display': 'none'}
+      vw_opt_val      = views
+      cb_opt_val      = states
+
+      df_rlvt         = df_st
+
+    elif (view == 'town'):
+      state_dd_style  = {'display': 'block'}
+      cb_style        = {'display': 'block'}
+      metric_style    = {'display': 'none'}
+      cb_opt_val      = towns
+
+      df_rlvt         = df_towns
+    
+    viz_type    = 'trend'
+    df_top      = get_rlvt_data(df_rlvt, viz_type, view, metric, cb_list)
+    x_title     = ""
+    y_title     = ""
+    fig_trend   = get_trend_fig(data, x_title, y_title)
+    print(fig_top)
+
+  print(vw_opt_val)
+  vw_options = [ {'label': views_dict[i], 'value': i} for i in vw_opt_val ]
+  cb_options = [ {'label': i, 'value': i} for i in cb_opt_val ]
+
+  return (
+    state_dd_style,
+    cb_style,
+    metric_style,
+
+    vw_options,
+    cb_options,  
+
+    md_txt, 
+    #fig_top,
+    #fig_trends
+  )
 
 """
 # ======================================================================
@@ -325,7 +384,7 @@ def get_top_fig(
 # Component update functions - get trend chart
 # ======================================================================
 """
-def get_trend(
+def get_trend_fig(
   data, 
   x_title, 
   y_title
@@ -449,12 +508,12 @@ def get_smry_tab():
 # ======================================================================
 """
 def get_distrib_tab():
-  tab_name = 'tab_distrib'
+  tab_name = 'tab_top'
   tab_label = tab_dict[tab_name]
   fig_id = f"{tab_name}_fig"
 
-  _, _, _, _, _, fig_top, _ = \
-    upd_app('tab_smry','us', def_state, None, 'population')
+  #(_, _, _, _, _, fig_top, _) = \
+  #  upd_app('tab_top','us', def_state, None, 'population')
 
   tab = dcc.Tab(
     value = tab_name,
@@ -464,7 +523,8 @@ def get_distrib_tab():
     children = [
       dcc.Graph(
         id     = fig_id,
-        figure = fig_top
+        #figure = fig_top
+        figure = None
       )
     ]
   )
@@ -481,8 +541,8 @@ def get_trends_tab():
   tab_label = tab_dict[tab_name]
   fig_id = f"{tab_name}_fig"
 
-  _, _, _, _, _, _, fig_trends = \
-    upd_app('tab_smry','us', def_state, None, 'population')
+  #( _, _, _, _, _, _, fig_trends) = \
+  #  upd_app('tab_trend','us', def_state, None, 'population')
 
   tab = dcc.Tab (
     value = tab_name,
@@ -494,7 +554,8 @@ def get_trends_tab():
         children = [
           dcc.Graph(
             id     = fig_id,
-            figure = fig_trends,
+            #figure = fig_top
+            figure = None
           )
         ],
       ),
@@ -757,11 +818,12 @@ app.layout = html.Div(
     Output('chk_bx_comp',     'style'),
     Output('metric_comp',     'style'),
 
+    Output('view_rb_cntrl',   'options'),
     Output('chk_bx_cntrl',    'options'),
 
     Output('tab_smry_md',     'children'),
-    Output('tab_distrib_fig', 'figure'),
-    Output('tab_trends_fig',  'figure'),
+    #Output('tab_top_fig',     'figure'),
+    #Output('tab_trends_fig',  'figure'),
   ],
   [
     Input('tabs',          'value'),
