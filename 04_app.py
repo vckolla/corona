@@ -84,7 +84,7 @@ tab_dict = {
 }
 
 dim_desc = [
-  'State',
+  'States',
   'County/Town',
   'Date'
 ]
@@ -97,12 +97,14 @@ dim_cols = [
 
 view_desc = [
   'US',
-  'State'
+  'State',
+  'County/Town'
 ]
 
 views = [
   'us',
-  'state'
+  'state',
+  'town'
 ]
 
 measure_cols = [
@@ -222,7 +224,21 @@ def upd_app(
       df_md_curr      = df_all_curr
 
     elif (view == 'state'):
-      print("111")
+      print("222")
+      state_dd_style  = {'display': 'none'}
+      cb_style        = {'display': 'block'}
+      metric_style    = {'display': 'none'}
+
+      cb_options      = states
+
+      df_md           = df_sts
+      df_md_curr      = df_sts_curr
+
+      #print(df_md.shape, df_md_curr.shape)
+      #print(cb_options)
+
+    elif (view == 'town'):
+      print("222")
       state_dd_style  = {'display': 'block'}
       cb_style        = {'display': 'block'}
       metric_style    = {'display': 'none'}
@@ -232,14 +248,14 @@ def upd_app(
       df_md           = df_towns
       df_md_curr      = df_towns_curr
 
-      print(df_md.shape, df_md_curr.shape)
-      print(cb_options)
+      #print(df_md.shape, df_md_curr.shape)
+      #print(cb_options)
 
   #cb_options = ['All', 'None'] + cb_options
   options = [ {'label': i, 'value': i} for i in cb_options ]
   md_txt = get_md(df_md, df_md_curr)
 
-  print(options)
+  #print(options)
 
   return state_dd_style, cb_style, metric_style, options, md_txt, top_fig, trends_fig
 
@@ -638,15 +654,20 @@ def get_controls():
   metric_id   = 'metric_cntrl'
 
   controls = [
-    dcc.Markdown(f"""
-    ---
-    ####  Select View
-    """),
-    dcc.RadioItems(
-      id         = view_rb_id,
-      options    = [{'label': views_dict[i], 'value': i} for i in views],
-      value      = view,
-      labelStyle = {'display':'in-line block'}
+    html.Div(
+      id = 'view_comp',
+      style = {'display': 'block'},
+      children = [
+      dcc.Markdown(f"""
+      ---
+      ####  Select View
+      """),
+      dcc.RadioItems(
+        id         = view_rb_id,
+        options    = [{'label': views_dict[i], 'value': i} for i in views],
+        value      = view,
+        labelStyle = {'display':'in-line block'}
+      )]
     ),
     
     html.Div(
@@ -665,30 +686,42 @@ def get_controls():
       ], 
     ),
 
-    dcc.Markdown(f"""
-    ---
-    ####  Select State / Town
-    """),
-    dcc.Checklist(
-      className   = "chk_bx_style",
-      id          = chk_bx_id,
-      options     = [{'label': i, 'value': i} for i in display],
-      labelStyle  = {'display':'block'},
+    html.Div(
+      id = 'chk_bx_comp',
+      style = {'display': 'block'},
+      children = [
+        dcc.Markdown(f"""
+        ---
+        ####  Select State / Town
+        """),
+        dcc.Checklist(
+          className   = "chk_bx_style",
+          id          = chk_bx_id,
+          options     = [{'label': i, 'value': i} for i in display],
+          labelStyle  = {'display':'block'},
+        )
+      ]
     ),
 
-    dcc.Markdown(f"""
-    ---
-    ####  Select Metric
-    """),
-    dcc.RadioItems(
-      id          = metric_id,
-      options     = [{'label': measures_dict[i], 'value': i} for i in town_measure_cols],
-      value       = town_measure_cols[0],
-      labelStyle  = {'display':'block'}
-    ),
-    dcc.Markdown(f"""
-    ---
-    """),  
+    html.Div(
+      id = 'metric_comp',
+      style = {'display': 'block'},
+      children = [
+        dcc.Markdown(f"""
+        ---
+        ####  Select Metric
+        """),
+        dcc.RadioItems(
+          id          = metric_id,
+          options     = [{'label': measures_dict[i], 'value': i} for i in town_measure_cols],
+          value       = town_measure_cols[0],
+          labelStyle  = {'display':'block'}
+        ),
+        dcc.Markdown(f"""
+        ---
+        """)
+      ],  
+    ), 
   ]
   return controls
 
@@ -721,8 +754,8 @@ app.layout = html.Div(
 @app.callback(
   [
     Output('state_dd_comp',   'style'),
-    Output('chk_bx_cntrl',    'style'),
-    Output('metric_cntrl',    'style'),
+    Output('chk_bx_comp',     'style'),
+    Output('metric_comp',     'style'),
 
     Output('chk_bx_cntrl',    'options'),
 
