@@ -61,7 +61,6 @@ mysql_con, sql_svr_con = get_con(cfg['mysql'], cfg['sql_svr'])
 con        = sql_svr_con
 sql        = f"select * from covid19_us_mds"
 df         = get_df_from_sql(sql, con)
-#df         = pd.read_csv("covid19_us_2020_04_07.csv")
 df['date'] = df['date'].astype('datetime64[ns]')
 df         = df[df['date'] >= min_date]
 
@@ -211,15 +210,15 @@ def upd_app(
   df_sts_curr   = df_sts[df_sts['date'] == rcnt_dt]
   df_towns_curr = df_towns[df_towns['date'] == rcnt_dt]
 
-  cb_opt_val    = states
-
   vw_opt_val = views.copy()
+  cb_opt_val = states
+  trend_data = []
+
   if (tab == 'tab_smry'):
     if (view == 'us'):
       state_dd_style  = {'display': 'none'}
       cb_style        = {'display': 'none'}
       metric_style    = {'display': 'none'}
-      cb_opt_val      = states
 
       df_md           = df_all
       df_md_curr      = df_all_curr
@@ -228,8 +227,7 @@ def upd_app(
       state_dd_style  = {'display': 'none'}
       cb_style        = {'display': 'block'}
       metric_style    = {'display': 'none'}
-      vw_opt_val      = views
-      cb_opt_val      = states
+      
       df_md           = df_sts
       df_md_curr      = df_sts_curr
 
@@ -245,8 +243,9 @@ def upd_app(
     md_txt = get_md(df_md, df_md_curr)
   elif (tab == 'tab_top'):
     vw_opt_val = ['us', 'state']
+    viz_type   = 'top'
+    
     if (view == 'us'):
-      print('111-1')
       state_dd_style  = {'display': 'none'}
       cb_style        = {'display': 'none'}
       metric_style    = {'display': 'block'}
@@ -260,7 +259,6 @@ def upd_app(
       df_rlvt         = df_st_curr
       y_col           = 'town'
 
-    viz_type    = 'top'
     df_top      = get_rlvt_data(df_rlvt, viz_type, view, metric, cb_list)
     x_top       = df_top[metric]
     y_top       = df_top[y_col]
@@ -269,39 +267,66 @@ def upd_app(
     fig_top     = get_top_fig(x_top, y_top, x_title, y_title)
     print(fig_top)
   elif (tab == 'tab_trends'):
+    vw_opt_val  = views.copy()
+    x_title     = f"Date"
+    y_title     = f"{metric.upper()}"
+    viz_type    = 'trend'
+    mode        = 'lines+markers'
+
     if (view == 'us'):
+      print("333-1")
       state_dd_style  = {'display': 'none'}
       cb_style        = {'display': 'none'}
-      metric_style    = {'display': 'none'}
+      metric_style    = {'display': 'block'}
       cb_opt_val      = states
 
       df_rlvt         = df_all
+      print(df_all.shape)
+      df_trend        = get_rlvt_data(df_rlvt, viz_type, view, metric, cb_list)
+      print(f"US trend data: \n{df_trend}")
+      y_title += ' for US'
+      x       = df_trend['date']
+      y       = df_trend[metric]
+      trend_data = trend_data.append({'x': x, 'y': y, 'mode': mode, 'name': 'US'})
 
     elif (view == 'state'):
+      print("333-2")
       state_dd_style  = {'display': 'none'}
       cb_style        = {'display': 'block'}
-      metric_style    = {'display': 'none'}
-      vw_opt_val      = views
+      metric_style    = {'display': 'block'}
       cb_opt_val      = states
 
-      df_rlvt         = df_st
+      df_rlvt         = df_sts
+      y_title += ' for States'
+      for s in (cb_list):
+        df_trend = get_rlvt_data(df_rlvt, viz_type, view, metric, cb_list)
+        print(f"{s} state trend data: \n{df_trend}")
+        x       = df_trend['date']
+        y       = df_trend[df_trend['state'] == s][metric]
+        trend_data = trend_data.append({'x': x, 'y': y, 'mode': mode, 'name': s})
 
     elif (view == 'town'):
+      print("333-3")
       state_dd_style  = {'display': 'block'}
       cb_style        = {'display': 'block'}
-      metric_style    = {'display': 'none'}
+      metric_style    = {'display': 'block'}
       cb_opt_val      = towns
 
       df_rlvt         = df_towns
+      y_title += ' for Counties'
+      for t in (cb_list):
+        df_trend = get_rlvt_data(df_rlvt, viz_type, view, metric, cb_list)
+        print(f"{t} town trend data: \n{df_trend}")
+        x       = df_trend['date']
+        y       = df_trend[df_trend['town'] == t][metric]
+        trend_data = trend_data.append({'x': x, 'y': y, 'mode': mode, 'name': t})
     
-    viz_type    = 'trend'
-    df_top      = get_rlvt_data(df_rlvt, viz_type, view, metric, cb_list)
-    x_title     = ""
-    y_title     = ""
-    fig_trend   = get_trend_fig(data, x_title, y_title)
-    print(fig_top)
+    #print(df_trend)
+    #print(trend_data)
+    fig_trends = get_trend_fig(trend_data, x_title, y_title)
+    #print(fig_trends)
 
-  print(vw_opt_val)
+  #print(vw_opt_val)
   vw_options = [ {'label': views_dict[i], 'value': i} for i in vw_opt_val ]
   cb_options = [ {'label': i, 'value': i} for i in cb_opt_val ]
 
@@ -640,6 +665,7 @@ def get_rlvt_data(
   num_top_points = 20
   
   df_out    = df[ dim_cols + [metric] ]
+  print(df_out)
 
   if (viz_type == 'top' ):
     if (view == 'us'):  group_by = 'state'
@@ -653,16 +679,18 @@ def get_rlvt_data(
     df_out.sort_values(by=[metric], inplace=True)
 
   elif (viz_type == 'trend'):
+    print("222-1")
     group_by = ['date']
   
-    if (view == 'us'):
+    if (view == 'state'):
       df_out = df_out[(df_out['state']).isin(cb_list)]
       group_by += ['state']
 
-    elif (view == 'state'):
+    elif (view == 'town'):
       df_out = df_out[(df_out['town']).isin(cb_list)]
 
     df_out = summarize_df(df_out, metric, group_by)
+    print(f"df_out = {df_out.shape}")
   
   return df_out
 
