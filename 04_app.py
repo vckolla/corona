@@ -147,6 +147,33 @@ views_dict        = dict(zip(views, view_desc))
 town_measure_cols = measure_cols
 cols              = dim_cols + measure_cols
 
+def get_yes_no(flag):
+  disp_no  = {'display': 'none'}
+  disp_yes = {'display': 'block'}
+  
+  if (flag == 1): ret_val =  disp_yes
+  else: ret_val = disp_no
+
+  return ret_val
+
+def get_disp_cntrl(disp_vec):
+    v               = disp_vec
+    state_dd_style  = get_yes_no(v[0])
+    cb_style        = get_yes_no(v[1])
+    metric_style    = get_yes_no(v[2])
+   
+    vw_options = [ {'label': views_dict[i], 'value': i} for i in v[3] ]
+    cb_options = [ {'label': i, 'value': i} for i in v[4]]
+
+    return [
+      state_dd_style,
+      cb_style,
+      metric_style,
+
+      vw_options,
+      cb_options,
+    ]
+
 """
 # ======================================================================
 # Set defaults
@@ -162,8 +189,8 @@ town              = def_town
 us_metric         = def_metric
 us_metric_ver     = def_ver
 state_metric      = def_metric
-trend_metric       = def_metric
-trend_metric_ver   = def_ver
+trend_metric      = def_metric
+trend_metric_ver  = def_ver
 
 def upd_app(
   tab,
@@ -172,9 +199,6 @@ def upd_app(
   cb_list,
   metric,
 ):
-  state_dd_style  = {'display': 'none'}
-  cb_style        = {'display': 'none'}
-  metric_style    = {'display': 'none'}
   vw_opt_val      = views.copy()
   md_txt          = ""
   fig_top         = None
@@ -198,12 +222,12 @@ def upd_app(
   df_st    = df[df['state'] == state]
   df_sts   = df[(df['state']).isin(cb_list)]
   df_towns = df[
-    (df['town']).isin(cb_list) & 
-    (df['state'] == state)
-    ]
+    (df['state'] == state) &
+    (df['town']).isin(cb_list)
+  ]
 
-  states = sorted(df_all['state'].unique())
-  towns  = sorted(df_st['town'].unique())
+  disp_states = sorted(df_all['state'].unique())
+  disp_towns  = sorted(df_st['town'].unique())
   
   df_all_curr   = df_all[df_all['date'] == rcnt_dt]
   df_st_curr    = df_st[df_st['date'] == rcnt_dt]
@@ -211,34 +235,21 @@ def upd_app(
   df_towns_curr = df_towns[df_towns['date'] == rcnt_dt]
 
   vw_opt_val = views.copy()
-  cb_opt_val = states
   trend_data = []
+  disp_vec   = [0, 0, 0, vw_opt_val, disp_states]
 
   if (tab == 'tab_smry'):
     if (view == 'us'):
-      state_dd_style  = {'display': 'none'}
-      cb_style        = {'display': 'none'}
-      metric_style    = {'display': 'none'}
-
-      df_md           = df_all
-      df_md_curr      = df_all_curr
+      disp_vec  = [0, 0, 0, vw_opt_val, disp_states]
+      df_md, df_md_curr = df_all, df_all_curr
 
     elif (view == 'state'):
-      state_dd_style  = {'display': 'none'}
-      cb_style        = {'display': 'block'}
-      metric_style    = {'display': 'none'}
-      
-      df_md           = df_sts
-      df_md_curr      = df_sts_curr
+      disp_vec   = [0, 1, 0, vw_opt_val, disp_states]
+      df_md, df_md_curr = df_sts, df_sts_curr
 
     elif (view == 'town'):
-      state_dd_style  = {'display': 'block'}
-      cb_style        = {'display': 'block'}
-      metric_style    = {'display': 'none'}
-      cb_opt_val      = towns
-
-      df_md           = df_towns
-      df_md_curr      = df_towns_curr
+      disp_vec   = [1, 1, 0, vw_opt_val, disp_towns]
+      df_md, df_md_curr = df_towns, df_towns_curr
     
     md_txt = get_md(df_md, df_md_curr)
   elif (tab == 'tab_top'):
@@ -246,18 +257,14 @@ def upd_app(
     viz_type   = 'top'
     
     if (view == 'us'):
-      state_dd_style  = {'display': 'none'}
-      cb_style        = {'display': 'none'}
-      metric_style    = {'display': 'block'}
-      df_rlvt         = df_all
-      y_col           = 'state'
+      disp_vec  = [0, 0, 1, vw_opt_val, disp_states]
+      df_rlvt   = df_all
+      y_col     = 'state'
 
     elif (view == 'state'):
-      state_dd_style  = {'display': 'block'}
-      cb_style        = {'display': 'none'}
-      metric_style    = {'display': 'block'}
-      df_rlvt         = df_st_curr
-      y_col           = 'town'
+      disp_vec  = [1, 0, 1, vw_opt_val, disp_states]
+      df_rlvt   = df_st_curr
+      y_col     = 'town'
 
     df_top      = get_rlvt_data(df_rlvt, viz_type, view, metric, cb_list)
     x_top       = df_top[metric]
@@ -267,7 +274,6 @@ def upd_app(
     fig_top     = get_top_fig(x_top, y_top, x_title, y_title)
     print(fig_top)
   elif (tab == 'tab_trends'):
-    vw_opt_val  = views.copy()
     x_title     = f"Date"
     y_title     = f"{metric.upper()}"
     viz_type    = 'trend'
@@ -275,66 +281,50 @@ def upd_app(
 
     if (view == 'us'):
       print("333-1")
-      state_dd_style  = {'display': 'none'}
-      cb_style        = {'display': 'none'}
-      metric_style    = {'display': 'block'}
-      cb_opt_val      = states
+      disp_vec  = [0, 0, 1, vw_opt_val, disp_states]
+      df_rlvt   = df_all
+      df_trend  = get_rlvt_data(df_rlvt, viz_type, view, metric, cb_list)
 
-      df_rlvt         = df_all
-      print(df_all.shape)
-      df_trend        = get_rlvt_data(df_rlvt, viz_type, view, metric, cb_list)
-      #print(f"US trend data: \n{df_trend}")
-      y_title += ' for US'
-      x       = df_trend['date']
-      y       = df_trend[metric]
-      trend_data = trend_data.append({'x': x, 'y': y, 'mode': mode, 'name': 'US'})
+      y_title     += ' for US'
+      x           = df_trend['date']
+      y           = df_trend[metric]
+      trend_data  = trend_data.append({'x': x, 'y': y, 'mode': mode, 'name': 'US'})
 
     elif (view == 'state'):
       print("333-2")
-      state_dd_style  = {'display': 'none'}
-      cb_style        = {'display': 'block'}
-      metric_style    = {'display': 'block'}
-      cb_opt_val      = states
+      disp_vec  = [0, 1, 1, vw_opt_val, disp_states]
+      df_rlvt   = df_sts
 
-      df_rlvt         = df_sts
       y_title += ' for States'
       print(cb_list)
       for s in (cb_list):
-        df_trend = get_rlvt_data(df_rlvt, viz_type, view, metric, cb_list)
-        #print(f"{s} state trend data: \n{df_trend}")
-        x       = df_trend['date']
-        y       = df_trend[df_trend['state'] == s][metric]
-        trend_data = trend_data.append({'x': x, 'y': y, 'mode': mode, 'name': s})
+        df_trend    = get_rlvt_data(df_rlvt, viz_type, view, metric, cb_list)
+        x           = df_trend['date']
+        y           = df_trend[df_trend['state'] == s][metric]
+        trend_data  = trend_data.append({'x': x, 'y': y, 'mode': mode, 'name': s})
 
     elif (view == 'town'):
       print("333-3")
-      state_dd_style  = {'display': 'block'}
-      cb_style        = {'display': 'block'}
-      metric_style    = {'display': 'block'}
-      cb_opt_val      = towns
+      disp_vec  = [1, 1, 1, vw_opt_val, disp_towns]
+      df_rlvt   = df_towns
 
-      df_rlvt         = df_towns
       y_title += ' for Counties'
-      #print(cb_list)
       for t in (cb_list):
-        df_trend = get_rlvt_data(df_rlvt, viz_type, view, metric, cb_list)
-        #print(f"{t} town trend data: \n{df_trend}")
-        x       = df_trend['date']
-        y       = df_trend[df_trend['town'] == t][metric]
-        trend_data = trend_data.append({'x': x, 'y': y, 'mode': mode, 'name': t})
+        df_trend    = get_rlvt_data(df_rlvt, viz_type, view, metric, cb_list)
+        x           = df_trend['date']
+        y           = df_trend[df_trend['town'] == t][metric]
+        trend_data  = trend_data.append({'x': x, 'y': y, 'mode': mode, 'name': t})
     
     fig_trends = get_trend_fig(trend_data, x_title, y_title)
-
-  vw_options = [ {'label': views_dict[i], 'value': i} for i in vw_opt_val ]
-  cb_options = [ {'label': i, 'value': i} for i in cb_opt_val ]
+  disp_rslt  = get_disp_cntrl(disp_vec)
+  print(f"disp_rslt = {disp_rslt}")
 
   return (
-    state_dd_style,
-    cb_style,
-    metric_style,
-
-    vw_options,
-    cb_options,  
+    disp_rslt[0],
+    disp_rslt[1],
+    disp_rslt[2],
+    disp_rslt[3],
+    disp_rslt[4],  
 
     md_txt, 
     #fig_top,
