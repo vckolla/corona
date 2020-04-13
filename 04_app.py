@@ -164,12 +164,193 @@ state_metric      = def_metric
 trend_metric       = def_metric
 trend_metric_ver   = def_ver
 
+def upd_app(
+  tab,
+  view,
+  state,
+  cb_list,
+  metric,
+):
+  state_dd_style  = {'display': 'none'}
+  cb_style        = {'display': 'none'}
+  metric_style    = {'display': 'none'}
+  cb_options      = None
+  md_txt          = ""
+  top_fig         = None
+  trends_fig      = None
+  group_by_cols   = []
+  rcnt_dt         = df['date'].max().date()
+
+  if (cb_list == None):
+    cb_list = ['None']
+
+  p_str = f"""
+  tab     = {tab}
+  view    = {view}
+  state   = {state}
+  cb_list = {cb_list}
+  metric  = {metric}
+  """
+  p_print(p_str)
+
+  df_all   = df
+  df_st    = df[df['state'] == state]
+  df_sts   = df[(df['state']).isin(cb_list)]
+  df_towns = df[
+    (df['town']).isin(cb_list) & 
+    (df['state'] == state)
+    ]
+
+  states = sorted(df_all['state'].unique())
+  towns  = sorted(df_st['town'].unique())
+  
+  df_all_curr   = df_all[df_all['date'] == rcnt_dt]
+  df_st_curr    = df_st[df_st['date'] == rcnt_dt]
+  df_sts_curr   = df_sts[df_sts['date'] == rcnt_dt]
+  df_towns_curr = df_towns[df_towns['date'] == rcnt_dt]
+
+  if (tab == 'tab_smry'):
+    if (view == 'us'):
+      print("000")
+      state_dd_style  = {'display': 'none'}
+      cb_style        = {'display': 'none'}
+      metric_style    = {'display': 'none'}
+
+      cb_options      = states
+
+      df_md           = df_all
+      df_md_curr      = df_all_curr
+
+    elif (view == 'state'):
+      print("111")
+      state_dd_style  = {'display': 'block'}
+      cb_style        = {'display': 'block'}
+      metric_style    = {'display': 'none'}
+
+      cb_options      = towns
+
+      df_md           = df_towns
+      df_md_curr      = df_towns_curr
+
+      print(df_md.shape, df_md_curr.shape)
+      print(cb_options)
+
+  #cb_options = ['All', 'None'] + cb_options
+  options = [ {'label': i, 'value': i} for i in cb_options ]
+  md_txt = get_md(df_md, df_md_curr)
+
+  print(options)
+
+  return state_dd_style, cb_style, metric_style, options, md_txt, top_fig, trends_fig
+
+"""
+# ======================================================================
+# Component update functions - get top values
+# ======================================================================
+"""
+def get_top_fig(
+  x_top, 
+  y_top, 
+  x_title,    
+  y_title
+):
+  """get_top_fig - Get a horizontal bar chart representing
+     the top values by a given measure on a given date
+
+  x_top:   x_axis values
+  y_top:   y_axis values
+  x_title: title of x_axis
+  y_title: title of y_axis
+  """
+  
+  # ====================================================================
+  # Adjust anotations
+  # Invest some more time in auto adjustment of format based on 
+  # metric type and and based on data
+  # ====================================================================
+  annotations = []
+  x_top = x_top.values
+  y_top = y_top.values
+  for x, y in zip(x_top, y_top):
+    annotations.append(dict(
+        x         = x,
+        y         = y,
+        text      = f"{x}",
+        showarrow = False
+    ))
+
+  # ====================================================================
+  # Boiler plate configuration for horizontal bar charts
+  # ====================================================================
+  fig = {
+    'data': [
+      {
+        'x':           x_top,
+        'y':           y_top,
+        'type':        'bar',
+        'orientation': 'h',
+      },
+    ],
+    'layout': {
+      'paper_bgcolor': "LightSteelBlue",
+      'bgcolor':       'White',
+      'height':        575,
+      'margin':        {'l': 200, 'b': 70, 'r': 10, 't': 5},
+      'xaxis':         {'title': f"{x_title}"},
+      'yaxis':         {'tickformat':',.0f'},
+      'font':          {'family':'Century Gothic', 'size':'14', 'color':'black'},
+      'annotations':   annotations,
+    }
+  }
+  return fig
+
+"""
+# ======================================================================
+# Component update functions - get trend chart
+# ======================================================================
+"""
+def get_trend(
+  data, 
+  x_title, 
+  y_title
+):
+  """get_trend - Get a line chart
+  x:       x_axis values
+  y:       y_axis values
+  x_title: title of x_axis
+  y_title: title of y_axis
+  """
+  # ====================================================================
+  # Boiler plate configuration for line charts
+  # ====================================================================
+  fig = {
+    'data': data,
+    'layout': {
+      'paper_bgcolor': "LightSteelBlue",
+      'bgcolor':       'White',
+      'height':        600,
+      'margin':        {'l': 75, 'b': 70, 'r': 10, 't': 5},
+      'xaxis':         {'title': f"{x_title}"},
+      'yaxis':         {'tickformat':',.1f'},
+      'font':          {'family':'Century Gothic', 'size':'14', 'color':'black'},
+      'clickmode':     'event+select',
+      'hovermode':     'x unified',
+      'hoverlabel':    {'bgcolor':'lightgray', 'font_size':'14'},
+      'showlegend':    True,
+      'legend_orientation': 'h',
+      'legend':        dict(x=0, y=1.1),
+      'traceorder':    'normal',
+      'connectgaps':    False,
+    }
+  }
+  return fig
+
 """
 # ======================================================================
 # Update summary tab
 # ======================================================================
 """
-def upd_md(df, df_rcnt):
+def get_md(df, df_rcnt):
   min_date   = df['date'].min().date()
   max_date   = df['date'].max().date()
   days       = len(df['date'].unique())
@@ -240,7 +421,7 @@ def get_smry_tab():
     children = [
       dcc.Markdown(
         id = f"{md_id}",
-        children = upd_md(df, df_rcnt)          
+        children = get_md(df, df_rcnt)          
       )
     ]
   )
@@ -255,7 +436,10 @@ def get_distrib_tab():
   tab_name = 'tab_distrib'
   tab_label = tab_dict[tab_name]
   fig_id = f"{tab_name}_fig"
-  
+
+  _, _, _, _, _, fig_top, _ = \
+    upd_app('tab_smry','us', def_state, None, 'population')
+
   tab = dcc.Tab(
     value = tab_name,
     label = tab_label,
@@ -264,7 +448,7 @@ def get_distrib_tab():
     children = [
       dcc.Graph(
         id     = fig_id,
-        #figure = upd_top_fig(us_metric, us_metric_ver)
+        figure = fig_top
       )
     ]
   )
@@ -281,6 +465,9 @@ def get_trends_tab():
   tab_label = tab_dict[tab_name]
   fig_id = f"{tab_name}_fig"
 
+  _, _, _, _, _, _, fig_trends = \
+    upd_app('tab_smry','us', def_state, None, 'population')
+
   tab = dcc.Tab (
     value = tab_name,
     label = tab_label,
@@ -291,7 +478,7 @@ def get_trends_tab():
         children = [
           dcc.Graph(
             id     = fig_id,
-            #figure = upd_trend_fig('us', state, town, trend_metric)
+            figure = fig_trends,
           )
         ],
       ),
@@ -338,108 +525,6 @@ def get_data_tab():
 
 """
 # ======================================================================
-# Component update functions - get top values
-# ======================================================================
-"""
-def get_top_fig(
-  x_top, 
-  y_top, 
-  x_title, 
-  y_title
-):
-  """get_top_fig - Get a horizontal bar chart representing
-     the top values by a given measure on a given date
-
-  x_top:   x_axis values
-  y_top:   y_axis values
-  x_title: title of x_axis
-  y_title: title of y_axis
-  """
-  
-  # ====================================================================
-  # Adjust anotations
-  # Invest some more time in auto adjustment of format based on 
-  # metric type and and based on data
-  # ====================================================================
-  annotations = []
-  x_top = x_top.values
-  y_top = y_top.values
-  for x, y in zip(x_top, y_top):
-    annotations.append(dict(
-        x         = x,
-        y         = y,
-        text      = f"{x}",
-        showarrow = False
-    ))
-
-  # ====================================================================
-  # Boiler plate configuration for horizontal bar charts
-  # ====================================================================
-  fig = {
-    'data': [
-      {
-        'x':           x_top,
-        'y':           y_top,
-        'type':        'bar',
-        'orientation': 'h',
-      },
-    ],
-    'layout': {
-      'paper_bgcolor': "LightSteelBlue",
-      'bgcolor':       'White',
-      'height':        600,
-      'margin':        {'l': 200, 'b': 70, 'r': 10, 't': 5},
-      'xaxis':         {'title': f"{x_title}"},
-      'yaxis':         {'tickformat':',.0f'},
-      'font':          {'family':'Century Gothic', 'size':'14', 'color':'black'},
-      'annotations':   annotations,
-    }
-  }
-  return fig
-
-"""
-# ======================================================================
-# Component update functions - get trend chart
-# ======================================================================
-"""
-def get_trend(
-  data, 
-  x_title, 
-  y_title
-):
-  """get_trend - Get a line chart
-  x:       x_axis values
-  y:       y_axis values
-  x_title: title of x_axis
-  y_title: title of y_axis
-  """
-  # ====================================================================
-  # Boiler plate configuration for line charts
-  # ====================================================================
-  fig = {
-    'data': data,
-    'layout': {
-      'paper_bgcolor': "LightSteelBlue",
-      'bgcolor':       'White',
-      'height':        600,
-      'margin':        {'l': 75, 'b': 70, 'r': 10, 't': 5},
-      'xaxis':         {'title': f"{x_title}"},
-      'yaxis':         {'tickformat':',.1f'},
-      'font':          {'family':'Century Gothic', 'size':'14', 'color':'black'},
-      'clickmode':     'event+select',
-      'hovermode':     'x unified',
-      'hoverlabel':    {'bgcolor':'lightgray', 'font_size':'14'},
-      'showlegend':    True,
-      'legend_orientation': 'h',
-      'legend':        dict(x=0, y=1.1),
-      'traceorder':    'normal',
-      'connectgaps':    False,
-    }
-  }
-  return fig
-
-"""
-# ======================================================================
 # summarize_df - summarize data
 # ======================================================================
 """
@@ -448,9 +533,9 @@ def summarize_df(df, metric, group_by_cols):
   sum_metrics = [ 'population', 'incidence', 'incidence_inc', 'deaths' ] 
   
   if (metric in avg_metrics):
-    df_out = df.groupby(group_by_cols)[metric].agg('mean')
+    df_out = round(df.groupby(group_by_cols)[metric].agg('mean'),2)
   elif (metric in sum_metrics):
-    df_out = df.groupby(group_by_cols)[metric].sum()
+    df_out = round(df.groupby(group_by_cols)[metric].sum(),0)
     
   df_out = pd.DataFrame(df_out)
   df_out = df_out.reset_index()
@@ -478,19 +563,18 @@ def get_rlvt_data(
   num_top_points = 20
   
   df_out    = df[ dim_cols + [metric] ]
-  curr_date = df_out['date'].max()
 
-  if (viz_type == 'us' ):
-    df_out = df_out[df_out['date'] == curr_date]
-    
-    if (view == 'state'):  group_by = 'state'
-    elif (view == 'town'): group_by = 'town'
+  if (viz_type == 'top' ):
+    if (view == 'us'):  group_by = 'state'
+    elif (view == 'state'): group_by = 'town'
     df_out = summarize_df(df_out, metric, group_by)
-      
-  elif (viz_type == 'state'):
-    df_out = df_out[df_out['date'] == curr_date]
-    df_out = df_out[df_out['state'] == cb_list]
+    # get top 20 by metric
+    df_out.sort_values(by=[metric], inplace=True, ascending=False)
+    df_out = df_out.head(num_top_points)
     
+    # Re-sort for display
+    df_out.sort_values(by=[metric], inplace=True)
+
   elif (viz_type == 'trend'):
     group_by = ['date']
   
@@ -502,16 +586,8 @@ def get_rlvt_data(
       df_out = df_out[(df_out['town']).isin(cb_list)]
 
     df_out = summarize_df(df_out, metric, group_by)
-
-  if (viz_type in [ 'us', 'state' ]):
-    # get top 20 by metric
-    df_out.sort_values(by=[metric], inplace=True, ascending=False)
-    df_out = df_out.head(num_top_points)
-    
-    # Re-sort for display
-    df_out.sort_values(by=[metric], inplace=True)
   
-  return df_out, curr_date.date()
+  return df_out
 
 """
 # ======================================================================
@@ -584,7 +660,7 @@ def get_controls():
         dcc.Dropdown(
           id      = state_dd_id,
           options = [{'label': i, 'value': i} for i in states],
-          value   = states[0]
+          #value   = states[0]
         ),
       ], 
     ),
@@ -645,12 +721,17 @@ app.layout = html.Div(
 @app.callback(
   [
     Output('state_dd_comp',   'style'),
+    Output('chk_bx_cntrl',    'style'),
+    Output('metric_cntrl',    'style'),
+
     Output('chk_bx_cntrl',    'options'),
+
     Output('tab_smry_md',     'children'),
     Output('tab_distrib_fig', 'figure'),
     Output('tab_trends_fig',  'figure'),
   ],
   [
+    Input('tabs',          'value'),
     Input('view_rb_cntrl', 'value'),
     Input('state_cntrl',   'value'),
     Input('chk_bx_cntrl',  'value'),
@@ -658,47 +739,13 @@ app.layout = html.Div(
   ]
 )
 def upd_app_cb(
+  tab,
   view,
   state,
   cb_list,
   metric,
 ):
-  if (cb_list == None):
-    cb_list = ['None']
-
-  p_str = f"""
-  view    = {view}
-  state   = {state}
-  cb_list = {cb_list}
-  metric  = {metric}
-  """
-  #p_print(p_str)
-
-  display       = states
-  style         = {'display': 'none'}
-  group_by_cols = []
-
-  if (view == 'us'):
-    pass
-  elif (view == 'state'):
-    display = sorted(df[df['state'] == state]['town'].unique())
-    style = {'display': 'block'}
-
-  #display = ['All', 'None'] + display
-  options = [ {'label': i, 'value': i} for i in display ]
-
-  df_st   = df[(df['state']).isin(cb_list)]
-  df_cnty = df[
-    (df['town']).isin(cb_list) & 
-    (df['state'] == state)
-    ]
-  df_st_curr   = df_st[df_st['date'] == rcnt_dt]
-  df_cnty_curr = df_cnty[df_cnty['date'] == rcnt_dt]
-  
-  if (view == 'us'): md_txt = upd_md(df_st, df_st_curr)
-  elif (view == 'state'): md_txt = upd_md(df_cnty, df_cnty_curr)
-
-  return style, options, md_txt, None, None
+  return upd_app(tab, view, state, cb_list, metric)
 
 """
 # ======================================================================
