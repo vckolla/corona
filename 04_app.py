@@ -695,10 +695,8 @@ def upd_app_cb(
   df_st_curr   = df_st[df_st['date'] == rcnt_dt]
   df_cnty_curr = df_cnty[df_cnty['date'] == rcnt_dt]
   
-  if (view == 'us'):
-    md_txt = upd_md(df_st, df_st_curr)
-  elif (view == 'state'):
-    md_txt = upd_md(df_cnty, df_cnty_curr)
+  if (view == 'us'): md_txt = upd_md(df_st, df_st_curr)
+  elif (view == 'state'): md_txt = upd_md(df_cnty, df_cnty_curr)
 
   return style, options, md_txt, None, None
 
