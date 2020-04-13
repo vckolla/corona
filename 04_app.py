@@ -283,7 +283,7 @@ def upd_app(
       df_rlvt         = df_all
       print(df_all.shape)
       df_trend        = get_rlvt_data(df_rlvt, viz_type, view, metric, cb_list)
-      print(f"US trend data: \n{df_trend}")
+      #print(f"US trend data: \n{df_trend}")
       y_title += ' for US'
       x       = df_trend['date']
       y       = df_trend[metric]
@@ -298,9 +298,10 @@ def upd_app(
 
       df_rlvt         = df_sts
       y_title += ' for States'
+      print(cb_list)
       for s in (cb_list):
         df_trend = get_rlvt_data(df_rlvt, viz_type, view, metric, cb_list)
-        print(f"{s} state trend data: \n{df_trend}")
+        #print(f"{s} state trend data: \n{df_trend}")
         x       = df_trend['date']
         y       = df_trend[df_trend['state'] == s][metric]
         trend_data = trend_data.append({'x': x, 'y': y, 'mode': mode, 'name': s})
@@ -314,19 +315,16 @@ def upd_app(
 
       df_rlvt         = df_towns
       y_title += ' for Counties'
+      #print(cb_list)
       for t in (cb_list):
         df_trend = get_rlvt_data(df_rlvt, viz_type, view, metric, cb_list)
-        print(f"{t} town trend data: \n{df_trend}")
+        #print(f"{t} town trend data: \n{df_trend}")
         x       = df_trend['date']
         y       = df_trend[df_trend['town'] == t][metric]
         trend_data = trend_data.append({'x': x, 'y': y, 'mode': mode, 'name': t})
     
-    #print(df_trend)
-    #print(trend_data)
     fig_trends = get_trend_fig(trend_data, x_title, y_title)
-    #print(fig_trends)
 
-  #print(vw_opt_val)
   vw_options = [ {'label': views_dict[i], 'value': i} for i in vw_opt_val ]
   cb_options = [ {'label': i, 'value': i} for i in cb_opt_val ]
 
