@@ -251,10 +251,12 @@ def upd_app(
       disp_vec   = [1, 1, 0, vw_opt_val, disp_towns]
       df_md, df_md_curr = df_towns, df_towns_curr
     
-    md_txt = get_md(df_md, df_md_curr)
+    md_txt     = get_md(df_md, df_md_curr)
   elif (tab == 'tab_top'):
     vw_opt_val = ['us', 'state']
     viz_type   = 'top'
+    df_rlvt    = df_all
+    y_col      = 'state'
     
     if (view == 'us'):
       disp_vec  = [0, 0, 1, vw_opt_val, disp_states]
@@ -271,16 +273,16 @@ def upd_app(
     y_top       = df_top[y_col]
     x_title     = f"Cumulative {metric.upper()} as of {rcnt_dt}"
     y_title     = f""
-    fig_top     = get_top_fig(x_top, y_top, x_title, y_title)
-    print(fig_top)
+    fig_top    = get_top_fig(x_top, y_top, x_title, y_title)
+
   elif (tab == 'tab_trends'):
     x_title     = f"Date"
     y_title     = f"{metric.upper()}"
     viz_type    = 'trend'
     mode        = 'lines+markers'
+    df_rlvt     = df_all
 
     if (view == 'us'):
-      print("333-1")
       disp_vec  = [0, 0, 1, vw_opt_val, disp_states]
       df_rlvt   = df_all
       df_trend  = get_rlvt_data(df_rlvt, viz_type, view, metric, cb_list)
@@ -288,36 +290,36 @@ def upd_app(
       y_title     += ' for US'
       x           = df_trend['date']
       y           = df_trend[metric]
-      trend_data  = trend_data.append({'x': x, 'y': y, 'mode': mode, 'name': 'US'})
+      trend_data.append({'x': x, 'y': y, 'mode': mode, 'name': 'US'})
 
     elif (view == 'state'):
-      print("333-2")
       disp_vec  = [0, 1, 1, vw_opt_val, disp_states]
       df_rlvt   = df_sts
 
       y_title += ' for States'
-      print(cb_list)
       for s in (cb_list):
         df_trend    = get_rlvt_data(df_rlvt, viz_type, view, metric, cb_list)
         x           = df_trend['date']
         y           = df_trend[df_trend['state'] == s][metric]
-        trend_data  = trend_data.append({'x': x, 'y': y, 'mode': mode, 'name': s})
+        trend_data.append({'x': x, 'y': y, 'mode': mode, 'name': s})
 
     elif (view == 'town'):
-      print("333-3")
       disp_vec  = [1, 1, 1, vw_opt_val, disp_towns]
       df_rlvt   = df_towns
 
       y_title += ' for Counties'
       for t in (cb_list):
         df_trend    = get_rlvt_data(df_rlvt, viz_type, view, metric, cb_list)
+        print(df_trend)
         x           = df_trend['date']
         y           = df_trend[df_trend['town'] == t][metric]
-        trend_data  = trend_data.append({'x': x, 'y': y, 'mode': mode, 'name': t})
+        trend_data.append({'x': x, 'y': y, 'mode': mode, 'name': t})
     
     fig_trends = get_trend_fig(trend_data, x_title, y_title)
+
   disp_rslt  = get_disp_cntrl(disp_vec)
-  print(f"disp_rslt = {disp_rslt}")
+  #print(fig_top)
+  print(fig_trends)
 
   return (
     disp_rslt[0],
@@ -326,9 +328,10 @@ def upd_app(
     disp_rslt[3],
     disp_rslt[4],  
 
-    md_txt, 
-    #fig_top,
-    #fig_trends
+    md_txt,
+    #f"{fig_top}",
+    fig_trends,
+    #f"{fig_trends}",
   )
 
 """
@@ -525,8 +528,8 @@ def get_distrib_tab():
   tab_label = tab_dict[tab_name]
   fig_id = f"{tab_name}_fig"
 
-  #(_, _, _, _, _, fig_top, _) = \
-  #  upd_app('tab_top','us', def_state, None, 'population')
+  (_, _, _, _, _, _, fig_top, _) = \
+    upd_app('tab_top','state', def_state, [states[0]], 'population')
 
   tab = dcc.Tab(
     value = tab_name,
@@ -534,11 +537,17 @@ def get_distrib_tab():
     className="custom-tab",
     selected_className="custom-tab--selected",
     children = [
-      dcc.Graph(
-        id     = fig_id,
-        #figure = fig_top
-        figure = None
-      )
+      #dcc.Graph(
+      #  id     = fig_id,
+      #  figure = fig_top,
+      #)
+      dcc.Markdown(
+        id = fig_id,
+        children = 
+          f"""
+      {fig_top}
+      """)
+      
     ]
   )
   
@@ -554,8 +563,8 @@ def get_trends_tab():
   tab_label = tab_dict[tab_name]
   fig_id = f"{tab_name}_fig"
 
-  #( _, _, _, _, _, _, fig_trends) = \
-  #  upd_app('tab_trend','us', def_state, None, 'population')
+  ( _, _, _, _, _, _, fig_trends) = \
+    upd_app('tab_trend','state', def_state, [states[0]], 'population')
 
   tab = dcc.Tab (
     value = tab_name,
@@ -567,9 +576,13 @@ def get_trends_tab():
         children = [
           dcc.Graph(
             id     = fig_id,
-            #figure = fig_top
-            figure = None
-          )
+            figure = fig_trends,
+          ),
+          #dcc.Markdown(
+          #  id = fig_id,
+          #  children = f"""
+          #{fig_trends}
+          #""")
         ],
       ),
     ]
@@ -653,9 +666,9 @@ def get_rlvt_data(
   num_top_points = 20
   
   df_out    = df[ dim_cols + [metric] ]
-  print(df_out)
 
   if (viz_type == 'top' ):
+    group_by = 'date'
     if (view == 'us'):  group_by = 'state'
     elif (view == 'state'): group_by = 'town'
     df_out = summarize_df(df_out, metric, group_by)
@@ -667,7 +680,6 @@ def get_rlvt_data(
     df_out.sort_values(by=[metric], inplace=True)
 
   elif (viz_type == 'trend'):
-    print("222-1")
     group_by = ['date']
   
     if (view == 'state'):
@@ -678,7 +690,6 @@ def get_rlvt_data(
       df_out = df_out[(df_out['town']).isin(cb_list)]
 
     df_out = summarize_df(df_out, metric, group_by)
-    print(f"df_out = {df_out.shape}")
   
   return df_out
 
@@ -707,7 +718,7 @@ def get_tabs():
   tabs = []
 
   tabs.append(get_smry_tab())
-  tabs.append(get_distrib_tab())
+  #tabs.append(get_distrib_tab())
   tabs.append(get_trends_tab())
   #tabs.append(get_data_tab())
 
@@ -758,7 +769,7 @@ def get_controls():
         dcc.Dropdown(
           id      = state_dd_id,
           options = [{'label': i, 'value': i} for i in states],
-          #value   = states[0]
+          value   = states[0]
         ),
       ], 
     ),
@@ -839,7 +850,9 @@ app.layout = html.Div(
 
     Output('tab_smry_md',     'children'),
     #Output('tab_top_fig',     'figure'),
-    #Output('tab_trends_fig',  'figure'),
+    #Output('tab_top_fig',     'children'),
+    Output('tab_trends_fig',  'figure'),
+    #Output('tab_trends_fig',  'children'),
   ],
   [
     Input('tabs',          'value'),
