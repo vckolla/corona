@@ -29,7 +29,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import os
 import sys
 import pandas               as pd
-import numpy                as np
 
 import dash_table
 import dash
