@@ -186,19 +186,35 @@ trend_metric_ver  = def_ver
 # ======================================================================
 """
 def get_md(df, df_rcnt):
-  min_date   = df['date'].min().date()
-  max_date   = df['date'].max().date()
-  days       = len(df['date'].unique())
-  num_states = len(df['state'].unique())
-  states     = sorted(df['state'].unique())
-  towns      = sorted(df['town'].unique())
-  num_towns  = len(df['town'].unique())
-  population = df_rcnt['population'].sum()
-  cum_incids = df_rcnt['incidence'].sum()
-  incid_rate = (cum_incids * 100) / population
-  incid_inc  = df_rcnt['incidence_inc'].sum()
-  cum_deaths = df_rcnt['deaths'].sum()
-  death_rate = (cum_deaths * 100) / cum_incids
+  #print(len(df), len(df_rcnt))
+  if (len(df) == 0 or len(df_rcnt) == 0):
+    min_date   = 'NA'
+    max_date   = 'NA'
+    days       = 0
+    num_states = 0
+    states     = 0
+    towns      = 0
+    num_towns  = 0
+    population = 0
+    cum_incids = 0
+    incid_rate = 0
+    incid_inc  = 0
+    cum_deaths = 0
+    death_rate = 0
+  else:    
+    min_date   = df['date'].min().date()
+    max_date   = df['date'].max().date()
+    days       = len(df['date'].unique())
+    num_states = len(df['state'].unique())
+    states     = sorted(df['state'].unique())
+    towns      = sorted(df['town'].unique())
+    num_towns  = len(df['town'].unique())
+    population = df_rcnt['population'].sum()
+    cum_incids = df_rcnt['incidence'].sum()
+    incid_rate = (cum_incids * 100) / population
+    incid_inc  = df_rcnt['incidence_inc'].sum()
+    cum_deaths = df_rcnt['deaths'].sum()
+    death_rate = (cum_deaths * 100) / cum_incids
 
   md_txt = f"""
   ---
@@ -236,7 +252,8 @@ def get_md(df, df_rcnt):
   ***(c) 2020 me:dha:.ai***
 
   ---
-  """  
+  """
+  #print(md_txt)  
   return md_txt
 
 """
@@ -258,7 +275,7 @@ def get_tab_contents(
   if (metric == None):  metric = 'incidence'
   
   p_str = f"""
-  top_trend_cntrl
+  get_tab_contents
   ---------------
   tab     = {tab}
   view    = {view}
@@ -282,9 +299,8 @@ def get_tab_contents(
   # =======================================================================
   # Initializations
   # =======================================================================
-  md_txt    = None
-  top_fig   = None
-  trend_fig = None
+  md_txt, top_fig, trend_fig = "", None, None
+
   if (view == 'us'):      df_rlvt   = df_all
   elif (view == 'state'): df_rlvt   = df_sts
   elif (view == 'town'):  df_rlvt   = df_towns
@@ -301,6 +317,7 @@ def get_tab_contents(
   # Top values
   # =======================================================================
   elif (tab == 'tab_top'):
+    #print("get_tab_contents - tab_top")
     viz_type = 'top'
     df_plt = get_rlvt_data(df_rlvt_curr, viz_type, view, metric, cb_list)
     top_fig = px.bar(df_plt, orientation = 'h', x= metric, y = view_cuts[view])
@@ -309,15 +326,14 @@ def get_tab_contents(
   # Over-time values
   # =======================================================================
   elif (tab == 'tab_trends'):
+    #print("get_tab_contents - tab_trends")
     viz_type = 'trend'
     df_plt = get_rlvt_data(df_rlvt, viz_type, view, metric, cb_list)
     if (view == 'us'): trend_fig = px.line(df_plt, x = 'date', y = metric)
     else:              trend_fig = px.line(df_plt, x = 'date', y = metric, color = views_color[view])
   
   return (
-    md_txt,
-    top_fig, 
-    trend_fig
+    md_txt, top_fig, trend_fig
   )
   
 """
@@ -326,6 +342,16 @@ def get_tab_contents(
 # ======================================================================
 """
 def get_tab(tab_type, name, init_val):
+  
+  p_str = f"""
+  tab_type    = {tab_type}
+  name        = {name}
+  md_name     = {name}_md
+  graph_name  = {name}_fig
+  data_name   = {name}_dat_tbl
+  init_val    = {init_val}
+  """
+  p_print(p_str)
   
   # Define child component
   if (tab_type == 'md'):
@@ -451,16 +477,19 @@ def get_tabs():
   smry_txt, top_fig, trend_fig = get_tab_contents(
       'tab_trends',
       'us',
-      '{def_state}',
+      f'{def_state}',
       ['None'],
       'population',
   )
   
+  #print(smry_txt)
+  #print(trend_fig)
+  
   tabs = []
 
-  tabs.append(get_tab('md',    'tab_trends', smry_txt))
-  tabs.append(get_tab('graph', 'tab_top',    top_fig))
-  tabs.append(get_tab('graph', 'tab_trends', top_fig))
+  tabs.append(get_tab('md',    'tab_smry',    smry_txt))
+  #tabs.append(get_tab('graph', 'tab_top',     top_fig))
+  tabs.append(get_tab('graph', 'tab_trends',  trend_fig))
   #tabs.append(get_tab('data',  'tab_data',   df_rcnt.columns))
 
   tabs_content = [
@@ -471,7 +500,7 @@ def get_tabs():
       children          = tabs,
     )
   ]
-
+  
   return tabs_content
 
 """
@@ -483,14 +512,22 @@ def get_cntrl_comp(
     cntrl,
     name,
     val_list,
-    disp_dict
+    disp_dict,
+    style = 'in-line block'
 ):
-  comp_id       = '{name}_comp'
-  cntrl_id      = '{name}_rb_cntrl'
-  cntrl_options = [{'label': disp_dict[i], 'value': i} for i in val_list]
-  init_val      = val_list[0]
+  comp_id       = f"{name}_comp"
+  cntrl_id      = f"{name}_cntrl"
+  if (val_list != ''):
+    cntrl_options = [{'label': disp_dict[i], 'value': i} for i in val_list]
+    init_val      = val_list[0]
+  else:
+    cntrl_options = None
+    init_val      = None    
   
-  if (cntrl != dcc.Markdown):    
+  comp = None
+  
+  if (cntrl == dcc.RadioItems):
+    #print(111)
     comp = html.Div(
       id        = comp_id,
       style     = {'display': 'block'},
@@ -499,16 +536,53 @@ def get_cntrl_comp(
         ---
         ####  Select {name}
         """),
-        *cntrl(
+        dcc.RadioItems(
           id         = cntrl_id,
           options    = cntrl_options,
           value      = init_val,
-          labelStyle = {'display':'in-line block'}
+          labelStyle = {'display': style}
         )
       ]
     )
-  elif (cntrl == dcc.Markdown):    
+  elif (cntrl == dcc.Checklist):
+    #print(111)
     comp = html.Div(
+      id        = comp_id,
+      className = "chk_bx_style",
+      style     = {'display': 'block'},
+      children  = [
+        dcc.Markdown(f"""
+        ---
+        ####  Select {name}
+        """),
+        dcc.Checklist(
+          id         = cntrl_id,
+          options    = cntrl_options,
+          labelStyle = {'display': style}
+        )
+      ]
+    )  
+  elif (cntrl == dcc.Dropdown):
+    #print(222)
+    comp = html.Div(
+      id        = comp_id,
+      style     = {'display': 'block'},
+      children  = [
+        dcc.Markdown(f"""
+        ---
+        ####  Select {name}
+        """),
+        dcc.Dropdown(
+          id         = cntrl_id,
+          options    = cntrl_options,
+          value      = init_val,
+        )
+      ]
+    )    
+  elif (cntrl == dcc.Markdown):    
+    #print(333)
+    comp = html.Div(
+      style     = {'display': 'block'},
       children  = [
         dcc.Markdown(f"""
         ---
@@ -524,13 +598,19 @@ def get_cntrl_comp(
 # ======================================================================
 """
 def get_controls():
+  # Define styles  
+  in_line = 'in-line block'
+  block   = 'block'
+  blank   = ''
+
   comps = []
+
+  comps.append(get_cntrl_comp(dcc.RadioItems,  'view',     views,          views_dict,    in_line))
+  comps.append(get_cntrl_comp(dcc.Dropdown,    'st_dd',    states,         states_dict,   in_line))
+  comps.append(get_cntrl_comp(dcc.Checklist,   'chk_bx',   states,         states_dict,   block))
+  comps.append(get_cntrl_comp(dcc.RadioItems,  'metric',   measure_cols,   measures_dict, block))
+  comps.append(get_cntrl_comp(dcc.Markdown,    blank,      blank,          blank,         block))
   
-  comps.append(get_cntrl_comp(dcc.RadioItems,  'view',     views,          views_dict))
-  comps.append(get_cntrl_comp(dcc.Dropdown,    'st_dd',    states,         states_dict))
-  comps.append(get_cntrl_comp(dcc.Checklist,   'chk_bx',   states,         states_dict))
-  comps.append(get_cntrl_comp(dcc.RadioItems,  'metric',   measure_cols,   measures_dict))
-  comps.append(get_cntrl_comp(dcc.Markdown,    None,       None,           None))
   return comps
 
 """
@@ -556,29 +636,29 @@ app.layout = html.Div(
 
 """
 # ======================================================================
-# get_yes_no(flag)
-# ======================================================================
-"""
-def get_yes_no(flag):
-  disp_no  = {'display': 'none'}
-  disp_yes = {'display': 'block'}
-  
-  if (flag == 1): ret_val =  disp_yes
-  else: ret_val = disp_no
-
-  return ret_val
-
-"""
-# ======================================================================
 # get_disp_cntrl(disp_vec):
 # ======================================================================
 """
 def get_disp_cntrl(disp_vec):
-    return [
-      get_yes_no(disp_vec[0]),
-      get_yes_no(disp_vec[1]),
-      get_yes_no(disp_vec[2]),
-    ]
+  """
+  # ======================================================================
+  # get_yes_no(flag)
+  # ======================================================================
+  """
+  def get_yes_no(flag):
+    disp_no  = {'display': 'none'}
+    disp_yes = {'display': 'block'}
+    
+    if (flag == 1): ret_val =  disp_yes
+    else: ret_val = disp_no
+  
+    return ret_val  
+  
+  return [
+    get_yes_no(disp_vec[0]),
+    get_yes_no(disp_vec[1]),
+    get_yes_no(disp_vec[2]),
+  ]
   
 """
 # ======================================================================
@@ -592,12 +672,12 @@ def get_disp_cntrl(disp_vec):
     Output('metric_comp',     'style'),
     
     Output('chk_bx_cntrl',    'options'),
-    Output('view_rb_cntrl',   'options')
+    Output('view_cntrl',      'options')
   ],
   [
     Input('tabs',             'value'),
-    Input('view_rb_cntrl',    'value'),
-    Input('st_dd_cntrl',      'value'),
+    Input('view_cntrl',       'value'),
+    Input('st_dd_cntrl',         'value'),
     Input('chk_bx_cntrl',     'value'),
   ]
 )
@@ -617,7 +697,7 @@ def comp_cntrl_cb(
   state   = {state}
   cb_list = {cb_list}
   """
-  p_print(p_str)
+  #p_print(p_str)
 
   # =======================================================================
   # View Control
@@ -672,25 +752,23 @@ def comp_cntrl_cb(
 
 """
 # ======================================================================
-# Top call back
+# Tab Contents call back
 # ======================================================================
 """
 @app.callback(
-  [
-    Output('tab_smry_md',     'children'),
-    Output('tab_top_fig',     'figure'),
-    Output('tab_trends_fig',  'figure'),
-  ],
+   Output('tab_smry_md',     'children'),
+   #Output('tab_top_fig',     'figure'),
+   #Output('tab_trends_fig',  'figure'),
   [
     Input('tabs',             'value'),
-    Input('view_rb_cntrl',    'value'),
+    Input('view_cntrl',       'value'),
     Input('st_dd_cntrl',      'value'),
 
     Input('chk_bx_cntrl',     'value'),
     Input('metric_cntrl',     'value'),
   ]
 )
-def tab_contents_cb(
+def md_contents_cb(
   tab,
   view,
   state,
@@ -698,11 +776,12 @@ def tab_contents_cb(
   metric,
 ):
   md_txt, top_fig, trend_fig = get_tab_contents(tab, view, state, cb_list, metric)
+  
   return (
     md_txt,
-    top_fig, 
-    trend_fig
-  )
+    #top_fig,
+    #trend_fig
+  )    
 
 """
 # ======================================================================
