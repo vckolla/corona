@@ -851,6 +851,7 @@ app.layout = html.Div(
     Input('state_cntrl',      'value'),
 
     Input('chk_bx_cntrl',     'value'),
+    Input('metric_cntrl',     'value'),
   ]
 )
 def comp_cntrl_cb(
@@ -858,6 +859,7 @@ def comp_cntrl_cb(
   view,
   state,
   cb_list,
+  metric,
 ):
   if (cb_list == None):
     cb_list = ['None']
@@ -869,6 +871,7 @@ def comp_cntrl_cb(
   view    = {view}
   state   = {state}
   cb_list = {cb_list}
+  metric  = {metric}
   """
   p_print(p_str)
 
