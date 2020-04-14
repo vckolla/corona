@@ -831,29 +831,6 @@ app.layout = html.Div(
 
 """
 # ======================================================================
-# View Control (based on tab selection)
-# ======================================================================
-"""
-"""
-@app.callback(
-  [
-    Output('view_rb_cntrl',   'options'),
-  ],
-  [
-    Input('tabs',             'value'),
-  ]
-)
-def view_cntrl_cb(
-  tab,
-):
-  disp_views = views
-  if (tab == 'tab_top'): disp_views = ['us','state']
-  options = [{'label': views_dict[i], 'value': i} for i in disp_views]
-  return options
-"""  
-
-"""
-# ======================================================================
 # Component control (based on tab)
 # ======================================================================
 """
@@ -864,6 +841,7 @@ def view_cntrl_cb(
     Output('metric_comp',     'style'),
     
     Output('chk_bx_cntrl',    'options'),
+    Output('view_rb_cntrl',   'options'),
   ],
   [
     Input('tabs',             'value'),
@@ -883,7 +861,7 @@ def comp_cntrl_cb(
   view  = {view}
   state = {state}
   """
-  p_print(p_str)
+  #p_print(p_str)
   
   disp_vec = [0, 0, 0]
 
@@ -895,6 +873,10 @@ def comp_cntrl_cb(
   elif (view == 'town'): cb_val = disp_towns
   
   cb_options = [ {'label': i, 'value': i} for i in cb_val ]
+  
+  disp_views = ['us','state', 'town']
+  if (tab == 'tab_top'): disp_views = ['us','state']
+  vw_options = [{'label': views_dict[i], 'value': i} for i in disp_views]
 
   if (tab == 'tab_smry'):
     if   (view == 'us'):      disp_vec  = [0, 0, 0]
@@ -916,8 +898,9 @@ def comp_cntrl_cb(
     disp_cntrl[0], 
     disp_cntrl[1], 
     disp_cntrl[2], 
-    cb_options
-    )    
+    cb_options,
+    vw_options,
+  )
   
 """
 @app.callback(
