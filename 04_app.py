@@ -842,29 +842,46 @@ app.layout = html.Div(
     
     Output('chk_bx_cntrl',    'options'),
     Output('view_rb_cntrl',   'options'),
+
+    Output('tab_smry_md',     'children'),
   ],
   [
     Input('tabs',             'value'),
     Input('view_rb_cntrl',    'value'),
     Input('state_cntrl',      'value'),
+
+    Input('chk_bx_cntrl',     'value'),
   ]
 )
 def comp_cntrl_cb(
   tab,
   view,
   state,
+  cb_list,
 ):
+  if (cb_list == None):
+    cb_list = ['None']
+    
   p_str = f"""
   comp_cntrl
   ----------
-  tab   = {tab}
-  view  = {view}
-  state = {state}
+  tab     = {tab}
+  view    = {view}
+  state   = {state}
+  cb_list = {cb_list}
   """
-  #p_print(p_str)
-  
-  disp_vec = [0, 0, 0]
+  p_print(p_str)
 
+  # =======================================================================
+  # View Control
+  # =======================================================================
+  disp_views = ['us','state', 'town']
+  if (tab == 'tab_top'): disp_views = ['us','state']
+  vw_options = [{'label': views_dict[i], 'value': i} for i in disp_views]
+  
+  # =======================================================================
+  # Check-box Control
+  # =======================================================================
   disp_states = states
   disp_towns  = sorted(df[df['state'] == state]['town'].unique())
   cb_val = disp_states
@@ -873,11 +890,11 @@ def comp_cntrl_cb(
   elif (view == 'town'): cb_val = disp_towns
   
   cb_options = [ {'label': i, 'value': i} for i in cb_val ]
-  
-  disp_views = ['us','state', 'town']
-  if (tab == 'tab_top'): disp_views = ['us','state']
-  vw_options = [{'label': views_dict[i], 'value': i} for i in disp_views]
 
+  # =======================================================================
+  # Display Control
+  # =======================================================================
+  disp_vec = [0, 0, 0]
   if (tab == 'tab_smry'):
     if   (view == 'us'):      disp_vec  = [0, 0, 0]
     elif (view == 'state'):   disp_vec  = [0, 1, 0]
@@ -894,12 +911,43 @@ def comp_cntrl_cb(
   
   disp_cntrl = get_disp_cntrl(disp_vec)
   
+  # =======================================================================
+  # Data
+  # =======================================================================
+  df_all   = df
+  df_st    = df[df['state'] == state]
+  df_sts   = df[(df['state']).isin(cb_list)]
+  df_towns = df[
+    (df['state'] == state) &
+    (df['town']).isin(cb_list)
+  ]
+  
+  df_all_curr   = df_all[df_all['date'] == rcnt_dt]
+  df_st_curr    = df_st[df_st['date'] == rcnt_dt]
+  df_sts_curr   = df_sts[df_sts['date'] == rcnt_dt]
+  df_towns_curr = df_towns[df_towns['date'] == rcnt_dt]
+
+  # =======================================================================
+  # Summary tab
+  # =======================================================================
+  df_md, df_md_curr = df_all, df_all_curr
+  if (tab == 'tab_smry'):
+    if (view == 'us'):      df_md, df_md_curr = df_all, df_all_curr
+    elif (view == 'state'): df_md, df_md_curr = df_sts, df_sts_curr
+    elif (view == 'town'):  df_md, df_md_curr = df_towns, df_towns_curr
+    
+  md_txt     = get_md(df_md, df_md_curr)
+  
+  # =======================================================================
+  # Return values
+  # =======================================================================
   return (
     disp_cntrl[0], 
     disp_cntrl[1], 
     disp_cntrl[2], 
     cb_options,
     vw_options,
+    md_txt,
   )
   
 """
