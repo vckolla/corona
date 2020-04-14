@@ -106,6 +106,12 @@ views = [
   'town'
 ]
 
+view_color_col = [
+    '',
+    'state',
+    'town'
+]
+
 measure_cols = [
   'population',
   'incidence',
@@ -143,6 +149,7 @@ state_measure_cols = [
 dim_dict          = dict(zip(dim_cols, dim_desc))
 measures_dict     = dict(zip(measure_cols, measure_desc))
 views_dict        = dict(zip(views, view_desc))
+views_color       = dict(zip(views, view_color_col))
 
 town_measure_cols = measure_cols
 cols              = dim_cols + measure_cols
@@ -566,7 +573,7 @@ def trend_fig(
   state   = {state}
   cb_list = {cb_list}
   """
-  p_print(p_str)
+  #p_print(p_str)
 
   # =======================================================================
   # Data
@@ -579,44 +586,19 @@ def trend_fig(
     (df['town']).isin(cb_list)
   ]
   
-  data = []
-  x_title     = f"Date"
-  y_title     = f"{metric.upper()}"
-  viz_type    = 'trend'
-  mode        = 'lines+markers'
-  df_rlvt     = df_all
+  fig = None
+  
   if (tab == 'tab_trends'):
-    if (view == 'us'):
-      df_rlvt   = df_all
-      df_trend  = get_rlvt_data(df_rlvt, viz_type, view, metric, cb_list)
+    if (view == 'us'):      df_rlvt   = df_all
+    elif (view == 'state'): df_rlvt   = df_sts
+    elif (view == 'town'):  df_rlvt   = df_towns
+  
+    viz_type = 'trend'
+    df_plt = get_rlvt_data(df_rlvt, viz_type, view, metric, cb_list)
+    
+    if (view == 'us'): fig = px.line(df_plt, x = 'date', y = metric)
+    else:              fig = px.line(df_plt, x = 'date', y = metric, color = views_color[view])
 
-      y_title     += ' for US'
-      x           = df_trend['date']
-      y           = df_trend[metric]
-      data.append({'x': x, 'y': y, 'mode': mode, 'name': 'US'})
-
-    elif (view == 'state'):
-      df_rlvt   = df_sts
-
-      y_title += ' for States'
-      for s in (cb_list):
-        df_trend    = get_rlvt_data(df_rlvt, viz_type, view, metric, cb_list)
-        x           = df_trend['date']
-        y           = df_trend[df_trend['state'] == s][metric]
-        data.append({'x': x, 'y': y, 'type':'line', 'mode': mode, 'name': s})
-
-    elif (view == 'town'):
-      df_rlvt   = df_towns
-
-      y_title += ' for Counties'
-      for t in (cb_list):
-        df_trend    = get_rlvt_data(df_rlvt, viz_type, view, metric, cb_list)
-        x           = df_trend['date']
-        y           = df_trend[df_trend['town'] == t][metric]
-        data.append({'x': x, 'y': y, 'type':'line', 'mode': mode, 'name': t})
-
-  fig = get_trend_fig(data, x_title, y_title)
-  print(fig)
   return fig
 
 """
@@ -759,22 +741,6 @@ def get_rlvt_data(
     df_out = summarize_df(df_out, metric, group_by)
   
   return df_out
-
-"""
-# ======================================================================
-# Helper function - cap_it -> cap the value especially if it is a percentage
-# Make this function more sophisticated
-# ======================================================================
-"""
-def cap_it(y, cap_val):
-  """cap_it - cap the value to something more meaningful - for analysis onnly
-  for now, if the abs(y) is less than cap_val, then use y, else use capped
-  value
-  """
-  if (y >= cap_val): return cap_val
-  if (y <= -cap_val): return -cap_val
-  else: return y
-  return None
 
 """
 # ======================================================================
@@ -948,7 +914,6 @@ def trend_fig_cb(
     Input('state_cntrl',      'value'),
 
     Input('chk_bx_cntrl',     'value'),
-#    Input('metric_cntrl',     'value'),
   ]
 )
 def comp_cntrl_cb(
@@ -1048,40 +1013,6 @@ def comp_cntrl_cb(
     vw_options,
     md_txt,
   )
-  
-"""
-@app.callback(
-  [
-    Output('state_dd_comp',   'style'),
-    Output('chk_bx_comp',     'style'),
-    Output('metric_comp',     'style'),
-
-    Output('view_rb_cntrl',   'options'),
-    Output('chk_bx_cntrl',    'options'),
-
-    Output('tab_smry_md',     'children'),
-    #Output('tab_top_fig',     'figure'),
-    #Output('tab_top_fig',     'children'),
-    Output('tab_trends_fig',  'figure'),
-    #Output('tab_trends_fig',  'children'),
-  ],
-  [
-    Input('tabs',          'value'),
-    Input('view_rb_cntrl', 'value'),
-    Input('state_cntrl',   'value'),
-    Input('chk_bx_cntrl',  'value'),
-    Input('metric_cntrl',  'value'),
-  ]
-)
-def upd_app_cb(
-  tab,
-  view,
-  state,
-  cb_list,
-  metric,
-):
-  return upd_app_cntrl(tab, view, state, cb_list, metric)
-"""  
 
 """
 # ======================================================================
