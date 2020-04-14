@@ -34,6 +34,7 @@ import dash_table
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+import plotly.express       as px
 
 from   dash.dependencies    import Input, Output
 
@@ -547,6 +548,77 @@ def get_distrib_tab():
   
   return tab
 
+def trend_fig(
+  tab,
+  view,
+  state,
+  cb_list,
+  metric,
+):
+  if (cb_list == None):
+    cb_list = ['None']
+    
+  p_str = f"""
+  trend_cntrl
+  ----------
+  tab     = {tab}
+  view    = {view}
+  state   = {state}
+  cb_list = {cb_list}
+  """
+  p_print(p_str)
+
+  # =======================================================================
+  # Data
+  # =======================================================================
+  df_all   = df
+  df_st    = df[df['state'] == state]
+  df_sts   = df[(df['state']).isin(cb_list)]
+  df_towns = df[
+    (df['state'] == state) &
+    (df['town']).isin(cb_list)
+  ]
+  
+  data = []
+  x_title     = f"Date"
+  y_title     = f"{metric.upper()}"
+  viz_type    = 'trend'
+  mode        = 'lines+markers'
+  df_rlvt     = df_all
+  if (tab == 'tab_trends'):
+    if (view == 'us'):
+      df_rlvt   = df_all
+      df_trend  = get_rlvt_data(df_rlvt, viz_type, view, metric, cb_list)
+
+      y_title     += ' for US'
+      x           = df_trend['date']
+      y           = df_trend[metric]
+      data.append({'x': x, 'y': y, 'mode': mode, 'name': 'US'})
+
+    elif (view == 'state'):
+      df_rlvt   = df_sts
+
+      y_title += ' for States'
+      for s in (cb_list):
+        df_trend    = get_rlvt_data(df_rlvt, viz_type, view, metric, cb_list)
+        x           = df_trend['date']
+        y           = df_trend[df_trend['state'] == s][metric]
+        data.append({'x': x, 'y': y, 'type':'line', 'mode': mode, 'name': s})
+
+    elif (view == 'town'):
+      df_rlvt   = df_towns
+
+      y_title += ' for Counties'
+      for t in (cb_list):
+        df_trend    = get_rlvt_data(df_rlvt, viz_type, view, metric, cb_list)
+        x           = df_trend['date']
+        y           = df_trend[df_trend['town'] == t][metric]
+        data.append({'x': x, 'y': y, 'type':'line', 'mode': mode, 'name': t})
+
+  fig = get_trend_fig(data, x_title, y_title)
+  print(fig)
+  return fig
+
 """
 # ======================================================================
 # Define tabs - Trends
@@ -557,8 +629,13 @@ def get_trends_tab():
   tab_label = tab_dict[tab_name]
   fig_id = f"{tab_name}_fig"
 
-  #( _, _, _, _, _, _, fig_trends) = \
-  #  upd_app('tab_trend','state', def_state, [states[0]], 'population')
+  fig = trend_fig(
+      'tab_trends',
+      'us',
+      '{def_state}',
+      ['None'],
+      'population',
+  )
 
   tab = dcc.Tab (
     value = tab_name,
@@ -570,14 +647,8 @@ def get_trends_tab():
         children = [
           dcc.Graph(
             id     = fig_id,
-            #figure = fig_trends,
-            figure = None,
+            figure = fig,
           ),
-          #dcc.Markdown(
-          #  id = fig_id,
-          #  children = f"""
-          #{fig_trends}
-          #""")
         ],
       ),
     ]
@@ -631,7 +702,7 @@ def summarize_df(df, metric, group_by_cols):
   sum_metrics = [ 'population', 'incidence', 'incidence_inc', 'deaths' ] 
   
   if (metric in avg_metrics):
-    df_out = round(df.groupby(group_by_cols)[metric].agg('mean'),2)
+    df_out = round(df.groupby(group_by_cols)[metric].agg('mean'),3)
   elif (metric in sum_metrics):
     df_out = round(df.groupby(group_by_cols)[metric].sum(),0)
     
@@ -683,6 +754,7 @@ def get_rlvt_data(
 
     elif (view == 'town'):
       df_out = df_out[(df_out['town']).isin(cb_list)]
+      group_by += ['town']
 
     df_out = summarize_df(df_out, metric, group_by)
   
@@ -831,6 +903,31 @@ app.layout = html.Div(
 
 """
 # ======================================================================
+# Trend call back
+# ======================================================================
+"""
+@app.callback(
+  Output('tab_trends_fig',  'figure'),
+  [
+    Input('tabs',             'value'),
+    Input('view_rb_cntrl',    'value'),
+    Input('state_cntrl',      'value'),
+
+    Input('chk_bx_cntrl',     'value'),
+    Input('metric_cntrl',     'value'),
+  ]
+)
+def trend_fig_cb(
+  tab,
+  view,
+  state,
+  cb_list,
+  metric,
+):
+  return trend_fig(tab, view, state, cb_list, metric)
+  
+"""
+# ======================================================================
 # Component control (based on tab)
 # ======================================================================
 """
@@ -851,7 +948,7 @@ app.layout = html.Div(
     Input('state_cntrl',      'value'),
 
     Input('chk_bx_cntrl',     'value'),
-    Input('metric_cntrl',     'value'),
+#    Input('metric_cntrl',     'value'),
   ]
 )
 def comp_cntrl_cb(
@@ -859,7 +956,7 @@ def comp_cntrl_cb(
   view,
   state,
   cb_list,
-  metric,
+#  metric,
 ):
   if (cb_list == None):
     cb_list = ['None']
@@ -871,7 +968,6 @@ def comp_cntrl_cb(
   view    = {view}
   state   = {state}
   cb_list = {cb_list}
-  metric  = {metric}
   """
   p_print(p_str)
 

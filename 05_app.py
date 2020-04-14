@@ -1,19 +1,19 @@
 """
 Copyright 2020 me:dha:.ai.
-Permission is hereby granted, free of charge, to any person obtaining a 
-copy of this software and associated documentation files (the "Software"), 
-to deal in the Software without restriction, including without limitation 
-the rights to use, copy, modify, merge, publish, distribute, sublicense, 
-and/or sell copies of the Software, and to permit persons to whom the 
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the
 Software is furnished to do so, subject to the following conditions:
-The above copyright notice and this permission notice shall be included 
+The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF 
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY 
-CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
-TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
@@ -167,12 +167,12 @@ def get_smry_tab():
         dcc.Markdown(f"""
         ---
         # US COVID 19 Tracker (as of {rcnt_dt})
-        
+
         ---
-        
+
         ## Data Summary
-        
-        
+
+
         |Metric|     |Value|
         |---:| :-: | :-: |
         | | | |
@@ -184,13 +184,13 @@ def get_smry_tab():
         | *Incidents increase:* || **{df_rcnt['incidence_inc'].sum():,.0f}**  |
         | *Deaths:*             || **{df_rcnt['deaths'].sum():,.0f}**  |
         ---
-        
+
         Source: ***[Corona John Hopkins University Git Repo] (https://github.com/CSSEGISandData/COVID-19) ***
-        
+
         ---
         Built on: ***[Python Dash framework] (https://plotly.com/dash/)***
-        
-        
+
+
         ***(c) 2020 me:dha:.ai***
         ---
         """
@@ -210,7 +210,7 @@ def get_us_tab():
   rb_id  = 'us_metric_rb'
   rb2_id = 'us_metric_ver_rb'
   fig_id = f"{tab}_fig"
-  
+
   tab_0 = dcc.Tab(
     label = label,
     value = tab,
@@ -248,7 +248,7 @@ def get_us_tab():
             options    = [{'label': dim_dict[i], 'value': i} for i in ['state','town']],
             value      = 'state',
             labelStyle = {'display':'block'}
-          ),      
+          ),
           dcc.Markdown(f"""
           ---
           """),
@@ -256,7 +256,7 @@ def get_us_tab():
       )
     ]
   )
-  
+
   return tab_0
 
 """
@@ -315,7 +315,7 @@ def get_state_tab():
       )
     ]
   )
-      
+
   return tab_1
 
 """
@@ -458,9 +458,9 @@ def get_tabs():
 # ======================================================================
 """
 def get_top_fig(
-  x_top, 
-  y_top, 
-  x_title, 
+  x_top,
+  y_top,
+  x_title,
   y_title
 ):
   """get_top_fig - Get a horizontal bar chart representing
@@ -470,10 +470,10 @@ def get_top_fig(
   x_title: title of x_axis
   y_title: title of y_axis
   """
-  
+
   # ====================================================================
   # Adjust anotations
-  # Invest some more time in auto adjustment of format based on 
+  # Invest some more time in auto adjustment of format based on
   # metric type and and based on data
   # ====================================================================
   annotations = []
@@ -518,8 +518,8 @@ def get_top_fig(
 # ======================================================================
 """
 def get_trend(
-  data, 
-  x_title, 
+  data,
+  x_title,
   y_title
 ):
   """get_trend - Get a line chart
@@ -573,21 +573,21 @@ def get_rlvt_data(
   filter_val:  the value to filter on
   """
   num_top_points = 20
-  
+
   def summarize_df(df, metric, group_by):
     avg_metrics = [ 'incidence_inc_pct',  'incidence_rate_pct', 'death_rate_pct' ]
-    sum_metrics = [ 'population', 'incidence', 'incidence_inc', 'deaths' ] 
-    
+    sum_metrics = [ 'population', 'incidence', 'incidence_inc', 'deaths' ]
+
     if (metric in avg_metrics):
       df_out = df.groupby(group_by)[metric].agg('mean')
     elif (metric in sum_metrics):
       df_out = df.groupby(group_by)[metric].sum()
-      
+
     df_out = pd.DataFrame(df_out)
     df_out = df_out.reset_index()
-    
+
     return df_out
-  
+
   d_cols = dim_cols
   if ('us' in d_cols): d_cols.remove('us')
 
@@ -596,14 +596,14 @@ def get_rlvt_data(
 
   if (viz_type in [ 'us'] ):
     df_out    = df_out[df_out['date'] == curr_date]
-    
+
     if (metric_ver == 'state'):
       df_out = summarize_df(df_out, metric, metric_ver)
-      
+
   elif (viz_type == 'state'):
     df_out = df_out[df_out['date'] == curr_date]
     df_out = df_out[df_out['state'] == filter_val]
-    
+
   elif (viz_type == 'town'):
     if (metric_ver == 'us'):
       df_out = summarize_df(df_out, metric, ['date'])
@@ -617,10 +617,10 @@ def get_rlvt_data(
     # get top 20 by metric
     df_out.sort_values(by=[metric], inplace=True, ascending=False)
     df_out = df_out.head(num_top_points)
-    
+
     # Re-sort for display
     df_out.sort_values(by=[metric], inplace=True)
-  
+
   return df_out, curr_date.date()
 
 """
@@ -652,7 +652,7 @@ def upd_us_fig(
   metric: The metric to update
   """
   df_us, curr_date = get_rlvt_data(
-      df, 'us', 
+      df, 'us',
       us_metric, us_metric_ver)
 
   x_top   = df_us[us_metric]
@@ -678,7 +678,7 @@ def upd_state_fig(
   state_metric: The metric to update
   """
   df_state, curr_date = get_rlvt_data(
-      df, 'state', 
+      df, 'state',
       state_metric, 'state', state)
 
   x_top   = df_state[state_metric]
@@ -708,12 +708,12 @@ def upd_town_fig(
   metric: The metric to update
   """
   df_town, curr_date  = get_rlvt_data(
-      df, 'town', town_metric, 
+      df, 'town', town_metric,
       town_metric_ver, state)
 
   if (town_metric_ver == 'town'):
     df_town = df_town[df_town['town'].isin(town)]
-    
+
   data = []
   mode = 'lines+markers'
 
@@ -734,9 +734,9 @@ def upd_town_fig(
       x = df_town['date']
       y = df_town[df_town['town'] == t][town_metric]
       data.append({'x':x, 'y':y, 'mode': mode, 'name': y_title})
-  
+
   fig = get_trend(data, x_title, y_title)
-  
+  print (fig)
   return fig
 
 """
@@ -748,7 +748,7 @@ app = dash.Dash(__name__)
 app.config.suppress_callback_exceptions = True
 app.layout = html.Div([
     dcc.Tabs(
-      id    = 'tabs', 
+      id    = 'tabs',
       value = 'tab_smry',
       parent_className='custom-tabs',
         children=get_tabs()
@@ -822,7 +822,7 @@ def upd_town_fig_cb(
   df_town = df[df['state'] == state]
   towns   = df_town['town'].unique()
   options = [{'label': i, 'value': i} for i in towns]
-  
+
   return comp, options
 
 """
