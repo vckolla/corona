@@ -160,17 +160,11 @@ def get_disp_cntrl(disp_vec):
     state_dd_style  = get_yes_no(v[0])
     cb_style        = get_yes_no(v[1])
     metric_style    = get_yes_no(v[2])
-   
-    vw_options = [ {'label': views_dict[i], 'value': i} for i in v[3] ]
-    cb_options = [ {'label': i, 'value': i} for i in v[4]]
 
     return [
       state_dd_style,
       cb_style,
       metric_style,
-
-      vw_options,
-      cb_options,
     ]
 
 """
@@ -527,8 +521,8 @@ def get_distrib_tab():
   tab_label = tab_dict[tab_name]
   fig_id = f"{tab_name}_fig"
 
-  (_, _, _, _, _, _, fig_top, _) = \
-    upd_app('tab_top','state', def_state, [states[0]], 'population')
+  #(_, _, _, _, _, _, fig_top, _) = \
+  #  upd_app('tab_top','state', def_state, [states[0]], 'population')
 
   tab = dcc.Tab(
     value = tab_name,
@@ -536,16 +530,17 @@ def get_distrib_tab():
     className="custom-tab",
     selected_className="custom-tab--selected",
     children = [
-      #dcc.Graph(
-      #  id     = fig_id,
-      #  figure = fig_top,
-      #)
-      dcc.Markdown(
-        id = fig_id,
-        children = 
-          f"""
-      {fig_top}
-      """)
+      dcc.Graph(
+        id     = fig_id,
+        #figure = fig_top,
+        figure = None,
+      )
+      #dcc.Markdown(
+      #  id = fig_id,
+      #  children = 
+      #    f"""
+      #{fig_top}
+      #""")
       
     ]
   )
@@ -562,8 +557,8 @@ def get_trends_tab():
   tab_label = tab_dict[tab_name]
   fig_id = f"{tab_name}_fig"
 
-  ( _, _, _, _, _, _, fig_trends) = \
-    upd_app('tab_trend','state', def_state, [states[0]], 'population')
+  #( _, _, _, _, _, _, fig_trends) = \
+  #  upd_app('tab_trend','state', def_state, [states[0]], 'population')
 
   tab = dcc.Tab (
     value = tab_name,
@@ -575,7 +570,8 @@ def get_trends_tab():
         children = [
           dcc.Graph(
             id     = fig_id,
-            figure = fig_trends,
+            #figure = fig_trends,
+            figure = None,
           ),
           #dcc.Markdown(
           #  id = fig_id,
@@ -717,7 +713,7 @@ def get_tabs():
   tabs = []
 
   tabs.append(get_smry_tab())
-  #tabs.append(get_distrib_tab())
+  tabs.append(get_distrib_tab())
   tabs.append(get_trends_tab())
   #tabs.append(get_data_tab())
 
@@ -835,8 +831,94 @@ app.layout = html.Div(
 
 """
 # ======================================================================
-# View
+# View Control (based on tab selection)
 # ======================================================================
+"""
+"""
+@app.callback(
+  [
+    Output('view_rb_cntrl',   'options'),
+  ],
+  [
+    Input('tabs',             'value'),
+  ]
+)
+def view_cntrl_cb(
+  tab,
+):
+  disp_views = views
+  if (tab == 'tab_top'): disp_views = ['us','state']
+  options = [{'label': views_dict[i], 'value': i} for i in disp_views]
+  return options
+"""  
+
+"""
+# ======================================================================
+# Component control (based on tab)
+# ======================================================================
+"""
+@app.callback(
+  [
+    Output('state_dd_comp',   'style'),
+    Output('chk_bx_comp',     'style'),
+    Output('metric_comp',     'style'),
+    
+    Output('chk_bx_cntrl',    'options'),
+  ],
+  [
+    Input('tabs',             'value'),
+    Input('view_rb_cntrl',    'value'),
+    Input('state_cntrl',      'value'),
+  ]
+)
+def comp_cntrl_cb(
+  tab,
+  view,
+  state,
+):
+  p_str = f"""
+  comp_cntrl
+  ----------
+  tab   = {tab}
+  view  = {view}
+  state = {state}
+  """
+  p_print(p_str)
+  
+  disp_vec = [0, 0, 0]
+
+  disp_states = states
+  disp_towns  = sorted(df[df['state'] == state]['town'].unique())
+  cb_val = disp_states
+
+  if (view == 'state'):  cb_val = disp_states
+  elif (view == 'town'): cb_val = disp_towns
+  
+  cb_options = [ {'label': i, 'value': i} for i in cb_val ]
+
+  if (tab == 'tab_smry'):
+    if   (view == 'us'):      disp_vec  = [0, 0, 0]
+    elif (view == 'state'):   disp_vec  = [0, 1, 0]
+    elif (view == 'town'):    disp_vec  = [1, 1, 0]
+  
+  elif (tab == 'tab_top'):
+    if   (view == 'us'):      disp_vec  = [0, 0, 1]
+    elif (view == 'state'):   disp_vec  = [1, 0, 1]
+  
+  elif (tab == 'tab_trends'):
+    if   (view == 'us'):      disp_vec  = [0, 0, 1]
+    elif (view == 'state'):   disp_vec  = [0, 1, 1]
+    elif (view == 'town'):    disp_vec  = [1, 1, 1]
+  
+  disp_cntrl = get_disp_cntrl(disp_vec)
+  
+  return (
+    disp_cntrl[0], 
+    disp_cntrl[1], 
+    disp_cntrl[2], 
+    cb_options
+    )    
+  
 """
 @app.callback(
   [
@@ -868,7 +950,8 @@ def upd_app_cb(
   cb_list,
   metric,
 ):
-  return upd_app(tab, view, state, cb_list, metric)
+  return upd_app_cntrl(tab, view, state, cb_list, metric)
+"""  
 
 """
 # ======================================================================
