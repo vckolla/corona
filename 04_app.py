@@ -341,7 +341,7 @@ def get_tab_contents(
 # Boiler plate for a generic tab
 # ======================================================================
 """
-def get_tab(tab_type, name, init_val):
+def get_tab(tab_type, name, init_val, controls = None):
   
   p_str = f"""
   tab_type    = {tab_type}
@@ -395,7 +395,7 @@ def get_tab(tab_type, name, init_val):
     label               = tab_dict[name],
     className           = "custom-tab",
     selected_className  = "custom-tab--selected",
-    children            = child_comp,
+    children            = child_comp
   )
   
   return tab
@@ -492,6 +492,10 @@ def get_tabs():
   tabs.append(get_tab('graph', 'tab_trends',  trend_fig))
   #tabs.append(get_tab('data',  'tab_data',   df_rcnt.columns))
 
+  #cntrl_smry = get_controls('smry')
+  #tab_smry = get_tab('md', 'tab_smry', smry_txt, cntrl_smry)
+  
+  
   tabs_content = [
     dcc.Tabs(
       id                = 'tabs',
@@ -597,7 +601,7 @@ def get_cntrl_comp(
 # get_controls
 # ======================================================================
 """
-def get_controls():
+def get_controls(tab_name = ""):
   # Define styles  
   in_line = 'in-line block'
   block   = 'block'
@@ -605,11 +609,11 @@ def get_controls():
 
   comps = []
 
-  comps.append(get_cntrl_comp(dcc.RadioItems,  'view',     views,          views_dict,    in_line))
-  comps.append(get_cntrl_comp(dcc.Dropdown,    'st_dd',    states,         states_dict,   in_line))
-  comps.append(get_cntrl_comp(dcc.Checklist,   'chk_bx',   states,         states_dict,   block))
-  comps.append(get_cntrl_comp(dcc.RadioItems,  'metric',   measure_cols,   measures_dict, block))
-  comps.append(get_cntrl_comp(dcc.Markdown,    blank,      blank,          blank,         block))
+  comps.append(get_cntrl_comp(dcc.RadioItems,  f'{tab_name}_view',     views,         views_dict,    in_line))
+  comps.append(get_cntrl_comp(dcc.Dropdown,    f'{tab_name}_st_dd',    states,        states_dict,   in_line))
+  comps.append(get_cntrl_comp(dcc.Checklist,   f'{tab_name}_chk_bx',   states,        states_dict,   block))
+  comps.append(get_cntrl_comp(dcc.RadioItems,  f'{tab_name}_metric',   measure_cols,  measures_dict, block))
+  comps.append(get_cntrl_comp(dcc.Markdown,    blank,      blank,      blank,         block))
   
   return comps
 
@@ -756,9 +760,11 @@ def comp_cntrl_cb(
 # ======================================================================
 """
 @app.callback(
+  [
    Output('tab_smry_md',     'children'),
    #Output('tab_top_fig',     'figure'),
-   #Output('tab_trends_fig',  'figure'),
+   Output('tab_trends_fig',  'figure'),
+  ],
   [
     Input('tabs',             'value'),
     Input('view_cntrl',       'value'),
@@ -777,11 +783,13 @@ def md_contents_cb(
 ):
   md_txt, top_fig, trend_fig = get_tab_contents(tab, view, state, cb_list, metric)
   
+  print(md_txt)
+  print(trend_fig)
   return (
     md_txt,
     #top_fig,
-    #trend_fig
-  )    
+    trend_fig
+  )
 
 """
 # ======================================================================
