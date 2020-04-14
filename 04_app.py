@@ -157,6 +157,7 @@ measures_dict     = dict(zip(measure_cols, measure_desc))
 views_dict        = dict(zip(views, view_desc))
 views_color       = dict(zip(views, view_color_col))
 view_cuts         = dict(zip(views, view_cuts))
+states_dict       = dict(zip(states, states))
 
 town_measure_cols = measure_cols
 cols              = dim_cols + measure_cols
@@ -210,19 +211,19 @@ def get_md(df, df_rcnt):
 
 
   |Metric|     |Value|
-  |---:| :-: | :-: |
-  | | | |
-  | *From Date:*          || **{min_date}** |
-  | *To Date:*            || **{max_date}** |
-  | *Days:*                             || **{days}** |
-  | *# States (1):*    || **{num_states}** |
-  | *# Counties (2):*  || **{num_towns:,.0f}**  |
-  | *Population:*  || **{population:,.0f}**  |
-  | *Cumulative Incidents:*          || **{cum_incids:,.0f}**  |
-  | *Incidents rate (pct):*          || **{incid_rate:,.2f}**  |
+  |---:  | :-: | :-: |
+  |      |     |     |
+  | *From Date:*              || **{min_date}**         |
+  | *To Date:*                || **{max_date}**         |
+  | *Days:*                   || **{days}**             |
+  | *# States (1):*           || **{num_states}**       |
+  | *# Counties (2):*         || **{num_towns:,.0f}**   |
+  | *Population:*             || **{population:,.0f}**  |
+  | *Cumulative Incidents:*   || **{cum_incids:,.0f}**  |
+  | *Incidents rate (pct):*   || **{incid_rate:,.2f}**  |
   | *Incidents increase (from prior day):* || **{incid_inc:,.0f}**  |
-  | *Cumulative Deaths:*             || **{cum_deaths:,.0f}**  |
-  | *Death rate (pct):*          || **{death_rate:,.2f}**  |
+  | *Cumulative Deaths:*      || **{cum_deaths:,.0f}**  |
+  | *Death rate (pct):*       || **{death_rate:,.2f}**  |
 
   ---
   
@@ -379,13 +380,13 @@ def get_tab(tab_type, name, init_val):
 # ======================================================================
 """
 def summarize_df(df, metric, group_by_cols):
-  avg_metrics = [ 'incidence_inc_pct',  'incidence_rate_pct', 'death_rate_pct' ]
+  avg_metrics = [ 'incidence_inc_pct', 'incidence_rate_pct', 'death_rate_pct' ]
   sum_metrics = [ 'population', 'incidence', 'incidence_inc', 'deaths' ] 
   
   if (metric in avg_metrics):
-    df_out = round(df.groupby(group_by_cols)[metric].agg('mean'),3)
+    df_out = round(df.groupby(group_by_cols)[metric].agg('mean'), 2)
   elif (metric in sum_metrics):
-    df_out = round(df.groupby(group_by_cols)[metric].sum(),0)
+    df_out = round(df.groupby(group_by_cols)[metric].sum(), 0)
     
   df_out = pd.DataFrame(df_out)
   df_out = df_out.reset_index()
@@ -475,88 +476,62 @@ def get_tabs():
 
 """
 # ======================================================================
-# Prep main layout - controls
+# get_cntrl_comp():
 # ======================================================================
 """
-def get_controls():
-  view        = 'us'
-  display     = states
-  view_rb_id  = 'view_rb_cntrl'
-  state_dd_id = 'st_dd_cntrl'
-  chk_bx_id   = 'chk_bx_cntrl'
-  metric_id   = 'metric_cntrl'
-
-  controls = [
-    html.Div(
-      id = 'view_comp',
-      style = {'display': 'block'},
-      children = [
-      dcc.Markdown(f"""
-      ---
-      ####  Select View
-      """),
-      dcc.RadioItems(
-        id         = view_rb_id,
-        options    = [{'label': views_dict[i], 'value': i} for i in views],
-        value      = view,
-        labelStyle = {'display':'in-line block'}
-      )]
-    ),
-    
-    html.Div(
-      id = 'state_dd_comp',
-      style = {'display': 'block'},
-      children = [
+def get_cntrl_comp(
+    cntrl,
+    name,
+    val_list,
+    disp_dict
+):
+  comp_id       = '{name}_comp'
+  cntrl_id      = '{name}_rb_cntrl'
+  cntrl_options = [{'label': disp_dict[i], 'value': i} for i in val_list]
+  init_val      = val_list[0]
+  
+  if (cntrl != dcc.Markdown):    
+    comp = html.Div(
+      id        = comp_id,
+      style     = {'display': 'block'},
+      children  = [
         dcc.Markdown(f"""
         ---
-        ####  Select State
+        ####  Select {name}
         """),
-        dcc.Dropdown(
-          id      = state_dd_id,
-          options = [{'label': i, 'value': i} for i in states],
-          value   = states[0]
-        ),
-      ], 
-    ),
-
-    html.Div(
-      id = 'chk_bx_comp',
-      style = {'display': 'block'},
-      children = [
-        dcc.Markdown(f"""
-        ---
-        ####  Select State / Town
-        """),
-        dcc.Checklist(
-          className   = "chk_bx_style",
-          id          = chk_bx_id,
-          options     = [{'label': i, 'value': i} for i in display],
-          labelStyle  = {'display':'block'},
+        *cntrl(
+          id         = cntrl_id,
+          options    = cntrl_options,
+          value      = init_val,
+          labelStyle = {'display':'in-line block'}
         )
       ]
-    ),
-
-    html.Div(
-      id = 'metric_comp',
-      style = {'display': 'block'},
-      children = [
-        dcc.Markdown(f"""
-        ---
-        ####  Select Metric
-        """),
-        dcc.RadioItems(
-          id          = metric_id,
-          options     = [{'label': measures_dict[i], 'value': i} for i in town_measure_cols],
-          value       = town_measure_cols[0],
-          labelStyle  = {'display':'block'}
-        ),
+    )
+  elif (cntrl == dcc.Markdown):    
+    comp = html.Div(
+      children  = [
         dcc.Markdown(f"""
         ---
         """)
-      ],  
-    ), 
-  ]
-  return controls
+        ]
+    )
+
+  return comp
+
+"""
+# ======================================================================
+# get_controls
+# ======================================================================
+"""
+def get_controls():
+  comps = []
+  
+  comps.append(get_cntrl_comp(dcc.RadioItems,  'view',     views,          views_dict))
+  comps.append(get_cntrl_comp(dcc.Dropdown,    'st_dd',    states,         states_dict))
+  comps.append(get_cntrl_comp(dcc.Checklist,   'chk_bx',   states,         states_dict))
+  comps.append(get_cntrl_comp(dcc.RadioItems,  'metric',   measure_cols,   measures_dict))
+  comps.append(get_cntrl_comp(dcc.Markdown,    None,       None,           None))
+  return comps
 
 """
 # ======================================================================
@@ -599,15 +574,10 @@ def get_yes_no(flag):
 # ======================================================================
 """
 def get_disp_cntrl(disp_vec):
-    v               = disp_vec
-    state_dd_style  = get_yes_no(v[0])
-    cb_style        = get_yes_no(v[1])
-    metric_style    = get_yes_no(v[2])
-
     return [
-      state_dd_style,
-      cb_style,
-      metric_style,
+      get_yes_no(disp_vec[0]),
+      get_yes_no(disp_vec[1]),
+      get_yes_no(disp_vec[2]),
     ]
   
 """
@@ -617,7 +587,7 @@ def get_disp_cntrl(disp_vec):
 """
 @app.callback(
   [
-    Output('state_dd_comp',   'style'),
+    Output('st_dd_comp',      'style'),
     Output('chk_bx_comp',     'style'),
     Output('metric_comp',     'style'),
     
