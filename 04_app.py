@@ -56,11 +56,12 @@ from IPython.core.display import display
 """
 min_date  = '2020-03-01'
 
-mysql_con, sql_svr_con = get_con(cfg['mysql'], cfg['sql_svr'])
+#mysql_con, sql_svr_con = get_con(cfg['mysql'], cfg['sql_svr'])
 
-con        = sql_svr_con
+#con        = sql_svr_con
 sql        = f"select * from covid19_us_mds"
-df         = get_df_from_sql(sql, con)
+#df         = get_df_from_sql(sql, con)
+df         = pd.read_csv('covid19_us_2020-04-15.csv')
 df['date'] = df['date'].astype('datetime64[ns]')
 df         = df[df['date'] >= min_date]
 
@@ -545,7 +546,6 @@ def get_cntrl_comp(
   comp = None
   
   if (cntrl == dcc.RadioItems):
-    #print(111)
     comp = html.Div(
       id        = comp_id,
       style     = {'display': 'block'},
@@ -563,7 +563,6 @@ def get_cntrl_comp(
       ]
     )
   elif (cntrl == dcc.Checklist):
-    #print(111)
     comp = html.Div(
       id        = comp_id,
       className = "chk_bx_style",
@@ -581,7 +580,6 @@ def get_cntrl_comp(
       ]
     )  
   elif (cntrl == dcc.Dropdown):
-    #print(222)
     comp = html.Div(
       id        = comp_id,
       style     = {'display': 'block'},
@@ -598,7 +596,6 @@ def get_cntrl_comp(
       ]
     )    
   elif (cntrl == dcc.Markdown):    
-    #print(333)
     comp = html.Div(
       style     = {'display': 'block'},
       children  = [
@@ -606,6 +603,27 @@ def get_cntrl_comp(
         ---
         """)
         ]
+    )
+  elif (cntrl == html.Button):
+    comp = html.Div(
+      className = "button_layout",
+      id        = comp_id,
+      style     = {'display': 'block'},
+      children  = [
+        dcc.Markdown(f"""
+        ---
+        """),
+        html.Button(
+          'Is trend flattening ?',
+          id        = cntrl_id,
+          className = "button_style submit",
+        ),
+        html.Button(
+          'Clear', 
+          id        = f'{cntrl_id}_clr',
+          className = "button_style clear",
+        )
+      ]
     )
 
   return comp
@@ -627,6 +645,7 @@ def get_controls():
   comps.append(get_cntrl_comp(dcc.Dropdown,    'st_dd',    states,         states_dict,   in_line))
   comps.append(get_cntrl_comp(dcc.Checklist,   'chk_bx',   states,         states_dict,   block))
   comps.append(get_cntrl_comp(dcc.RadioItems,  'metric',   measure_cols,   measures_dict, block))
+  comps.append(get_cntrl_comp(html.Button,     'predict',  blank,          blank,         in_line))
   comps.append(get_cntrl_comp(dcc.Markdown,    blank,      blank,          blank,         block))
   
   return comps
@@ -638,6 +657,7 @@ def get_controls():
 """
 app = dash.Dash(__name__)
 app.config.suppress_callback_exceptions = True
+app.title = "US COVID19 Tracker"
 app.layout = html.Div(
   children = [
     html.Div(
@@ -676,6 +696,7 @@ def get_disp_cntrl(disp_vec):
     get_yes_no(disp_vec[0]),
     get_yes_no(disp_vec[1]),
     get_yes_no(disp_vec[2]),
+    get_yes_no(disp_vec[3])
   ]
   
 """
@@ -688,6 +709,7 @@ def get_disp_cntrl(disp_vec):
     Output('st_dd_comp',      'style'),
     Output('chk_bx_comp',     'style'),
     Output('metric_comp',     'style'),
+    Output('predict_comp',    'style'),
     
     Output('chk_bx_cntrl',    'options'),
     Output('view_cntrl',      'options')
@@ -741,18 +763,19 @@ def comp_cntrl_cb(
   # =======================================================================
   disp_vec = [0, 0, 0]
   if (tab == 'tab_smry'):
-    if   (view == 'us'):      disp_vec  = [0, 0, 0]
-    elif (view == 'state'):   disp_vec  = [0, 1, 0]
-    elif (view == 'town'):    disp_vec  = [1, 1, 0]
+    if   (view == 'us'):      disp_vec  = [0, 0, 0, 0]
+    elif (view == 'state'):   disp_vec  = [0, 1, 0, 0]
+    elif (view == 'town'):    disp_vec  = [1, 1, 0, 0]
   
   elif (tab == 'tab_top'):
-    if   (view == 'us'):      disp_vec  = [0, 0, 1]
-    elif (view == 'state'):   disp_vec  = [1, 0, 1]
+    if   (view == 'us'):      disp_vec  = [0, 0, 1, 0]
+    elif (view == 'state'):   disp_vec  = [1, 0, 1, 0]
+    elif (view == 'town'):    disp_vec  = [1, 0, 1, 0]
   
   elif (tab == 'tab_trends'):
-    if   (view == 'us'):      disp_vec  = [0, 0, 1]
-    elif (view == 'state'):   disp_vec  = [0, 1, 1]
-    elif (view == 'town'):    disp_vec  = [1, 1, 1]
+    if   (view == 'us'):      disp_vec  = [0, 0, 1, 1]
+    elif (view == 'state'):   disp_vec  = [0, 1, 1, 1]
+    elif (view == 'town'):    disp_vec  = [1, 1, 1, 1]
   
   disp_cntrl = get_disp_cntrl(disp_vec)
   
@@ -763,6 +786,7 @@ def comp_cntrl_cb(
     disp_cntrl[0], 
     disp_cntrl[1], 
     disp_cntrl[2],
+    disp_cntrl[3],
     
     cb_options,
     vw_options

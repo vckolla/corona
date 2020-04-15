@@ -93,3 +93,26 @@ h1, h2, h3, h4, h5, h6 {
   border-right: 1px solid lightgrey !important;
   border-top:   3px solid #e36209 !important;
 }
+
+.button_style {
+  align-items:      center;
+  background-color: cornflowerblue;
+  font-family:      "Century Gothic";
+  /* font-weight:      bold; */
+  font-size:        15px;
+  color:          white;
+  height:           60px;
+}
+
+.button_style .submit {
+  width: 200px;
+}
+
+.button_style .clear {
+  width: 100px;
+}
+
+.button_layout {
+  text-align: center;
+  display:    inline;
+}
