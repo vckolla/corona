@@ -319,9 +319,9 @@ def get_tab_contents(
     # =======================================================================
     #elif (tab == 'tab_top'):
     #print("get_tab_contents - tab_top")
-    viz_type = 'top'
-    df_plt = get_rlvt_data(df_rlvt_curr, viz_type, view, metric, cb_list)
-    top_fig = px.bar(df_plt, orientation = 'h', x= metric, y = view_cuts[view])
+    #viz_type = 'top'
+    #df_plt = get_rlvt_data(df_rlvt_curr, viz_type, view, metric, cb_list)
+    #top_fig = px.bar(df_plt, orientation = 'h', x= metric, y = view_cuts[view])
 
     # =======================================================================
     # Over-time values
@@ -330,6 +330,7 @@ def get_tab_contents(
     #print("get_tab_contents - tab_trends")
     viz_type = 'trend'
     df_plt = get_rlvt_data(df_rlvt, viz_type, view, metric, cb_list)
+    print(df_plt)
     if (view == 'us'): trend_fig = px.line(df_plt, x = 'date', y = metric)
     else:              trend_fig = px.line(df_plt, x = 'date', y = metric, color = views_color[view])
   
