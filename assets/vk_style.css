@@ -8,37 +8,37 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .app_left {
-  width:          64%;
-  display:        inline-block;
-  vertical-align: top;
-  padding:        5px;
-  overflow-x:     scroll;
-  overflow-y:     scroll;
-  height:         650px;
-  font:           "Century Gothic";
+  width:            64%;
+  display:          inline-block;
+  vertical-align:   top;
+  padding:          5px;
+  overflow-x:       scroll;
+  overflow-y:       scroll;
+  height:           650px;
+  font:             "Century Gothic";
 }
 
 .app_right {
-  width:          34%;
-  display:        inline-block;
-  vertical-align: top;
-  padding:        5px;
-  overflow-x:     scroll;
-  overflow-y:     scroll;
-  height:         650px;
-  font:           "Century Gothic";
+  width:            34%;
+  display:          inline-block;
+  vertical-align:   top;
+  padding:          5px;
+  overflow-x:       scroll;
+  overflow-y:       scroll;
+  height:           650px;
+  font:             "Century Gothic";
   background-color: rgba(234,234,234);
 }
 
 .app_full {
-  width:          99%;
-  display:        inline-block;
-  vertical-align: top;
-  padding:        5px;
-  overflow-x:     scroll;
-  overflow-y:     scroll;
-  height:         650px;
-  font:           "Century Gothic";
+  width:            99%;
+  display:          inline-block;
+  vertical-align:   top;
+  padding:          5px;
+  overflow-x:       scroll;
+  overflow-y:       scroll;
+  height:           650px;
+  font:             "Century Gothic";
   background-color:rgba(234,234,234);
 }
 
@@ -56,7 +56,7 @@ h1, h2, h3, h4, h5, h6 {
   display:    block;
   overflow-x: scroll;
   overflow-y: scroll;
-  height:     125px;
+  height:     225px;
 }
 
 .custom-tabs-container {

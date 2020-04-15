@@ -77,7 +77,7 @@ df_rcnt    = df[df['date'] == rcnt_dt]
 """
 tab_dict = {
   'tab_smry':    f"Summary",
-  'tab_top':     f"Top",
+  'tab_top':     f"High Risk on {rcnt_dt}",
   'tab_trends':  f"Trends",
   'tab_data':    f"Data",
 }
@@ -168,17 +168,8 @@ cols              = dim_cols + measure_cols
 # ======================================================================
 """
 def_metric        = 'incidence'
-def_ver           = 'state'
 def_state         = 'Massachusetts'
 def_town          = 'Middlesex, Massachusetts, US'
-
-state             = def_state
-town              = def_town
-us_metric         = def_metric
-us_metric_ver     = def_ver
-state_metric      = def_metric
-trend_metric      = def_metric
-trend_metric_ver  = def_ver
 
 """
 # ======================================================================
@@ -186,7 +177,6 @@ trend_metric_ver  = def_ver
 # ======================================================================
 """
 def get_md(df, df_rcnt):
-  #print(len(df), len(df_rcnt))
   if (len(df) == 0 or len(df_rcnt) == 0):
     min_date   = 'NA'
     max_date   = 'NA'
@@ -253,7 +243,6 @@ def get_md(df, df_rcnt):
 
   ---
   """
-  #print(md_txt)  
   return md_txt
 
 """
@@ -262,7 +251,6 @@ def get_md(df, df_rcnt):
 # ======================================================================
 """
 def get_tab_contents(
-  tab,
   view,
   state,
   cb_list,
@@ -277,22 +265,21 @@ def get_tab_contents(
   p_str = f"""
   get_tab_contents
   ---------------
-  tab     = {tab}
   view    = {view}
   state   = {state}
   cb_list = {cb_list}
   metric  = {metric}
   """
-  p_print(p_str)
+  #p_print(p_str)
   
   try:
     # =======================================================================
-    # Return value initialization
+    # Initializations
     # =======================================================================
     md_txt, top_fig, trend_fig = "Empty", None, None
 
     # =======================================================================
-    # Data
+    # Gather data
     # =======================================================================
     df_all   = df
     df_st    = df[df['state'] == state]
@@ -313,37 +300,59 @@ def get_tab_contents(
     df_top_curr = df_top[df_top['date'] == rcnt_dt]
 
     # =======================================================================
-    # Summary tab
+    # Refresh data for summary tab
     # =======================================================================
-    #if (tab == 'tab_smry'):
     md_txt = get_md(df_md, df_md_curr)
 
     # =======================================================================
-    # Top values
+    # Refresh plot for high risk tab
     # =======================================================================
-    #elif (tab == 'tab_top'):
     if (view != 'town'):
       viz_type = 'top'
+      top_attribs = dict(
+      )
       df_plt_top = get_rlvt_data(df_top_curr, viz_type, view, metric, cb_list)
-      top_fig = px.bar(df_plt_top, orientation = 'h', x= metric, y = view_cuts[view], height=650)
+      top_fig = px.bar(
+        df_plt_top,
+        orientation = 'h',
+        x           = metric, 
+        y           = view_cuts[view], 
+        height      = 650
+      )
     else:
       top_fig = None
 
     # =======================================================================
-    # Over-time values
+    # Refresh data for over-time trends tab
     # =======================================================================
-    #elif (tab == 'tab_trends'):
     viz_type = 'trend'
     df_plt_trend = get_rlvt_data(df_trend, viz_type, view, metric, cb_list)
-    if (view == 'us'): trend_fig = px.line(df_plt_trend, x = 'date', y = metric, height=600)
-    else:              trend_fig = px.line(df_plt_trend, x = 'date', y = metric, color = views_color[view], height=600)
-  
+    trend_attribs = dict(
+    )
+    if (view == 'us'): 
+      trend_fig = px.line(
+        df_plt_trend,
+        x       = 'date', 
+        y       = metric, 
+        height  = 600
+      )
+    else:
+      trend_fig = px.line(
+        df_plt_trend,
+        x       = 'date', 
+        y       = metric,
+        color   = views_color[view],
+        height  = 600
+      )
+
   except:
     print("Some error occurred")  
   
   finally:
     return (
-      md_txt, top_fig, trend_fig
+      md_txt, 
+      top_fig, 
+      trend_fig
     )
   
 """
@@ -423,10 +432,8 @@ def summarize_df(df, metric, group_by_cols):
   avg_metrics = [ 'incidence_inc_pct', 'incidence_rate_pct', 'death_rate_pct' ]
   sum_metrics = [ 'population', 'incidence', 'incidence_inc', 'deaths' ] 
   
-  if (metric in avg_metrics):
-    df_out = round(df.groupby(group_by_cols)[metric].agg('mean'), 2)
-  elif (metric in sum_metrics):
-    df_out = round(df.groupby(group_by_cols)[metric].sum(), 0)
+  if (metric in avg_metrics):   df_out = round(df.groupby(group_by_cols)[metric].agg('mean'), 2)
+  elif (metric in sum_metrics): df_out = round(df.groupby(group_by_cols)[metric].sum(), 0)
     
   df_out = pd.DataFrame(df_out)
   df_out = df_out.reset_index()
@@ -457,8 +464,9 @@ def get_rlvt_data(
 
   if (viz_type == 'top' ):
     group_by = 'date'
-    if (view == 'us'):  group_by = 'state'
+    if (view == 'us'):      group_by = 'state'
     elif (view == 'state'): group_by = 'town'
+
     df_out = summarize_df(df_out, metric, group_by)
     # get top 20 by metric
     df_out.sort_values(by=[metric], inplace=True, ascending=False)
@@ -489,12 +497,11 @@ def get_rlvt_data(
 """
 def get_tabs():
   def_smry_txt, def_top_fig, def_trend_fig = get_tab_contents(
-      'tab_trends',
       'us',
       f'{def_state}',
       ['None'],
-      'population',
-  )  
+      f'{def_metric}',
+  )
   
   tabs = []
 
@@ -533,7 +540,7 @@ def get_cntrl_comp(
     init_val      = val_list[0]
   else:
     cntrl_options = None
-    init_val      = None    
+    init_val      = None
   
   comp = None
   
@@ -688,7 +695,7 @@ def get_disp_cntrl(disp_vec):
   [
     Input('tabs',             'value'),
     Input('view_cntrl',       'value'),
-    Input('st_dd_cntrl',         'value'),
+    Input('st_dd_cntrl',      'value'),
     Input('chk_bx_cntrl',     'value'),
   ]
 )
@@ -773,7 +780,6 @@ def comp_cntrl_cb(
     Output('tab_trends_fig',      'figure'),
   ],
   [
-    Input('tabs',                 'value'),
     Input('view_cntrl',           'value'),
     Input('st_dd_cntrl',          'value'),
 
@@ -785,7 +791,6 @@ def comp_cntrl_cb(
   ]
 )
 def md_contents_cb(
-  tab,
   view,
   state,
   cb_list,
@@ -794,7 +799,7 @@ def md_contents_cb(
   def_top_fig,
   def_trend_fig,
 ):
-  md_txt, top_fig, trend_fig = get_tab_contents(tab, view, state, cb_list, metric)
+  md_txt, top_fig, trend_fig = get_tab_contents(view, state, cb_list, metric)
 
   if (top_fig == None):
     print ("Using def top fig")
@@ -809,7 +814,11 @@ def md_contents_cb(
   -------
   
   {md_txt}
-  
+
+  top_fig:
+  ----------
+  {top_fig}
+
   trend_fig:
   ----------
   {trend_fig}
