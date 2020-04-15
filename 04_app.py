@@ -285,56 +285,62 @@ def get_tab_contents(
   """
   p_print(p_str)
   
-  # =======================================================================
-  # Data
-  # =======================================================================
-  df_all   = df
-  df_st    = df[df['state'] == state]
-  df_sts   = df[(df['state']).isin(cb_list)]
-  df_towns = df[
-    (df['state'] == state) &
-    (df['town']).isin(cb_list)
-  ]
+  try:
 
-  # =======================================================================
-  # Initializations
-  # =======================================================================
-  md_txt, top_fig, trend_fig = "", None, None
+    # =======================================================================
+    # Data
+    # =======================================================================
+    df_all   = df
+    df_st    = df[df['state'] == state]
+    df_sts   = df[(df['state']).isin(cb_list)]
+    df_towns = df[
+      (df['state'] == state) &
+      (df['town']).isin(cb_list)
+    ]
 
-  if (view == 'us'):      df_rlvt   = df_all
-  elif (view == 'state'): df_rlvt   = df_sts
-  elif (view == 'town'):  df_rlvt   = df_towns
+    # =======================================================================
+    # Initializations
+    # =======================================================================
+    md_txt, top_fig, trend_fig = "Empty", None, None
 
-  df_rlvt_curr = df_rlvt[df_rlvt['date'] == rcnt_dt]
+    if (view == 'us'):      df_rlvt   = df_all
+    elif (view == 'state'): df_rlvt   = df_sts
+    elif (view == 'town'):  df_rlvt   = df_towns
 
-  # =======================================================================
-  # Summary tab
-  # =======================================================================
-  if (tab == 'tab_smry'):
-    md_txt = get_md(df_rlvt, df_rlvt_curr)
+    df_rlvt_curr = df_rlvt[df_rlvt['date'] == rcnt_dt]
 
-  # =======================================================================
-  # Top values
-  # =======================================================================
-  elif (tab == 'tab_top'):
-    #print("get_tab_contents - tab_top")
-    viz_type = 'top'
-    df_plt = get_rlvt_data(df_rlvt_curr, viz_type, view, metric, cb_list)
-    top_fig = px.bar(df_plt, orientation = 'h', x= metric, y = view_cuts[view])
+    # =======================================================================
+    # Summary tab
+    # =======================================================================
+    if (tab == 'tab_smry'):
+      md_txt = get_md(df_rlvt, df_rlvt_curr)
 
-  # =======================================================================
-  # Over-time values
-  # =======================================================================
-  elif (tab == 'tab_trends'):
-    #print("get_tab_contents - tab_trends")
-    viz_type = 'trend'
-    df_plt = get_rlvt_data(df_rlvt, viz_type, view, metric, cb_list)
-    if (view == 'us'): trend_fig = px.line(df_plt, x = 'date', y = metric)
-    else:              trend_fig = px.line(df_plt, x = 'date', y = metric, color = views_color[view])
+    # =======================================================================
+    # Top values
+    # =======================================================================
+    elif (tab == 'tab_top'):
+      #print("get_tab_contents - tab_top")
+      viz_type = 'top'
+      df_plt = get_rlvt_data(df_rlvt_curr, viz_type, view, metric, cb_list)
+      top_fig = px.bar(df_plt, orientation = 'h', x= metric, y = view_cuts[view])
+
+    # =======================================================================
+    # Over-time values
+    # =======================================================================
+    elif (tab == 'tab_trends'):
+      #print("get_tab_contents - tab_trends")
+      viz_type = 'trend'
+      df_plt = get_rlvt_data(df_rlvt, viz_type, view, metric, cb_list)
+      if (view == 'us'): trend_fig = px.line(df_plt, x = 'date', y = metric)
+      else:              trend_fig = px.line(df_plt, x = 'date', y = metric, color = views_color[view])
   
-  return (
-    md_txt, top_fig, trend_fig
-  )
+  except:
+    print("Some error occurred")  
+  
+  finally:
+    return (
+      md_txt, top_fig, trend_fig
+    )
   
 """
 # ======================================================================
@@ -756,9 +762,11 @@ def comp_cntrl_cb(
 # ======================================================================
 """
 @app.callback(
-   Output('tab_smry_md',     'children'),
-   #Output('tab_top_fig',     'figure'),
-   #Output('tab_trends_fig',  'figure'),
+  [
+    Output('tab_smry_md',     'children'),
+    #Output('tab_top_fig',     'figure'),
+    Output('tab_trends_fig',  'figure'),
+  ],
   [
     Input('tabs',             'value'),
     Input('view_cntrl',       'value'),
@@ -777,10 +785,24 @@ def md_contents_cb(
 ):
   md_txt, top_fig, trend_fig = get_tab_contents(tab, view, state, cb_list, metric)
   
+  p_str = f"""
+  md_txt:
+  -------
+  
+  {md_txt}
+  
+  trend_fig:
+  ----------
+  {trend_fig}
+  
+  ===End===
+  """
+  p_print(p_str)
+  
   return (
     md_txt,
     #top_fig,
-    #trend_fig
+    trend_fig
   )    
 
 """
