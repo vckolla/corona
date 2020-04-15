@@ -325,7 +325,7 @@ def get_tab_contents(
     if (view != 'town'):
       viz_type = 'top'
       df_plt_top = get_rlvt_data(df_top_curr, viz_type, view, metric, cb_list)
-      top_fig = px.bar(df_plt_top, orientation = 'h', x= metric, y = view_cuts[view])
+      top_fig = px.bar(df_plt_top, orientation = 'h', x= metric, y = view_cuts[view], height=650)
     else:
       top_fig = None
 
@@ -335,8 +335,8 @@ def get_tab_contents(
     #elif (tab == 'tab_trends'):
     viz_type = 'trend'
     df_plt_trend = get_rlvt_data(df_trend, viz_type, view, metric, cb_list)
-    if (view == 'us'): trend_fig = px.line(df_plt_trend, x = 'date', y = metric)
-    else:              trend_fig = px.line(df_plt_trend, x = 'date', y = metric, color = views_color[view])
+    if (view == 'us'): trend_fig = px.line(df_plt_trend, x = 'date', y = metric, height=600)
+    else:              trend_fig = px.line(df_plt_trend, x = 'date', y = metric, color = views_color[view], height=600)
   
   except:
     print("Some error occurred")  
