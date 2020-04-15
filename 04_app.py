@@ -302,37 +302,41 @@ def get_tab_contents(
       (df['town']).isin(cb_list)
     ]
 
-    if (view == 'us'):      df_rlvt   = df_all
-    elif (view == 'state'): df_rlvt   = df_sts
-    elif (view == 'town'):  df_rlvt   = df_towns
+    if (view == 'us'):
+      df_md, df_top, df_trend  = df_all, df_all, df_all
+    elif (view == 'state'):
+      df_md, df_top, df_trend  = df_sts, df_st, df_sts
+    elif (view == 'town'):
+      df_md, df_top, df_trend  = df_towns, df_towns, df_towns
 
-    df_rlvt_curr = df_rlvt[df_rlvt['date'] == rcnt_dt]
+    df_md_curr  = df_md[df_md['date'] == rcnt_dt]
+    df_top_curr = df_top[df_top['date'] == rcnt_dt]
 
     # =======================================================================
     # Summary tab
     # =======================================================================
     #if (tab == 'tab_smry'):
-    md_txt = get_md(df_rlvt, df_rlvt_curr)
+    md_txt = get_md(df_md, df_md_curr)
 
     # =======================================================================
     # Top values
     # =======================================================================
     #elif (tab == 'tab_top'):
-    #print("get_tab_contents - tab_top")
-    viz_type = 'top'
-    df_plt = get_rlvt_data(df_rlvt_curr, viz_type, view, metric, cb_list)
-    top_fig = px.bar(df_plt, orientation = 'h', x= metric, y = view_cuts[view])
+    if (view != 'town'):
+      viz_type = 'top'
+      df_plt_top = get_rlvt_data(df_top_curr, viz_type, view, metric, cb_list)
+      top_fig = px.bar(df_plt_top, orientation = 'h', x= metric, y = view_cuts[view])
+    else:
+      top_fig = None
 
     # =======================================================================
     # Over-time values
     # =======================================================================
     #elif (tab == 'tab_trends'):
-    #print("get_tab_contents - tab_trends")
     viz_type = 'trend'
-    df_plt = get_rlvt_data(df_rlvt, viz_type, view, metric, cb_list)
-    print(df_plt)
-    if (view == 'us'): trend_fig = px.line(df_plt, x = 'date', y = metric)
-    else:              trend_fig = px.line(df_plt, x = 'date', y = metric, color = views_color[view])
+    df_plt_trend = get_rlvt_data(df_trend, viz_type, view, metric, cb_list)
+    if (view == 'us'): trend_fig = px.line(df_plt_trend, x = 'date', y = metric)
+    else:              trend_fig = px.line(df_plt_trend, x = 'date', y = metric, color = views_color[view])
   
   except:
     print("Some error occurred")  
@@ -357,7 +361,7 @@ def get_tab(tab_type, name, init_val):
   data_name   = {name}_dat_tbl
   init_val    = {init_val}
   """
-  p_print(p_str)
+  #p_print(p_str)
   
   # Define child component
   if (tab_type == 'md'):
@@ -794,7 +798,7 @@ def md_contents_cb(
 
   if (top_fig == None):
     print ("Using def top fig")
-    trend_fig = def_top_fig
+    top_fig = def_top_fig
 
   if (trend_fig == None):
     print ("Using def trend fig")
