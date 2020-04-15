@@ -286,6 +286,10 @@ def get_tab_contents(
   p_print(p_str)
   
   try:
+    # =======================================================================
+    # Return value initialization
+    # =======================================================================
+    md_txt, top_fig, trend_fig = "Empty", None, None
 
     # =======================================================================
     # Data
@@ -298,11 +302,6 @@ def get_tab_contents(
       (df['town']).isin(cb_list)
     ]
 
-    # =======================================================================
-    # Initializations
-    # =======================================================================
-    md_txt, top_fig, trend_fig = "Empty", None, None
-
     if (view == 'us'):      df_rlvt   = df_all
     elif (view == 'state'): df_rlvt   = df_sts
     elif (view == 'town'):  df_rlvt   = df_towns
@@ -312,27 +311,27 @@ def get_tab_contents(
     # =======================================================================
     # Summary tab
     # =======================================================================
-    if (tab == 'tab_smry'):
-      md_txt = get_md(df_rlvt, df_rlvt_curr)
+    #if (tab == 'tab_smry'):
+    md_txt = get_md(df_rlvt, df_rlvt_curr)
 
     # =======================================================================
     # Top values
     # =======================================================================
-    elif (tab == 'tab_top'):
-      #print("get_tab_contents - tab_top")
-      viz_type = 'top'
-      df_plt = get_rlvt_data(df_rlvt_curr, viz_type, view, metric, cb_list)
-      top_fig = px.bar(df_plt, orientation = 'h', x= metric, y = view_cuts[view])
+    #elif (tab == 'tab_top'):
+    #print("get_tab_contents - tab_top")
+    viz_type = 'top'
+    df_plt = get_rlvt_data(df_rlvt_curr, viz_type, view, metric, cb_list)
+    top_fig = px.bar(df_plt, orientation = 'h', x= metric, y = view_cuts[view])
 
     # =======================================================================
     # Over-time values
     # =======================================================================
-    elif (tab == 'tab_trends'):
-      #print("get_tab_contents - tab_trends")
-      viz_type = 'trend'
-      df_plt = get_rlvt_data(df_rlvt, viz_type, view, metric, cb_list)
-      if (view == 'us'): trend_fig = px.line(df_plt, x = 'date', y = metric)
-      else:              trend_fig = px.line(df_plt, x = 'date', y = metric, color = views_color[view])
+    #elif (tab == 'tab_trends'):
+    #print("get_tab_contents - tab_trends")
+    viz_type = 'trend'
+    df_plt = get_rlvt_data(df_rlvt, viz_type, view, metric, cb_list)
+    if (view == 'us'): trend_fig = px.line(df_plt, x = 'date', y = metric)
+    else:              trend_fig = px.line(df_plt, x = 'date', y = metric, color = views_color[view])
   
   except:
     print("Some error occurred")  
@@ -372,7 +371,11 @@ def get_tab(tab_type, name, init_val):
       dcc.Graph(
         id     = f"{name}_fig",
         figure = init_val,
-      )
+      ),
+      dcc.Store(
+        id     = f"{name}_fig_store",
+        data   = init_val,
+      ),
     ]
   elif (tab_type == 'data'):
     child_comp = [
@@ -480,22 +483,19 @@ def get_rlvt_data(
 # ======================================================================
 """
 def get_tabs():
-  smry_txt, top_fig, trend_fig = get_tab_contents(
+  def_smry_txt, def_top_fig, def_trend_fig = get_tab_contents(
       'tab_trends',
       'us',
       f'{def_state}',
       ['None'],
       'population',
-  )
-  
-  #print(smry_txt)
-  #print(trend_fig)
+  )  
   
   tabs = []
 
-  tabs.append(get_tab('md',    'tab_smry',    smry_txt))
-  #tabs.append(get_tab('graph', 'tab_top',     top_fig))
-  tabs.append(get_tab('graph', 'tab_trends',  trend_fig))
+  tabs.append(get_tab('md',    'tab_smry',    def_smry_txt))
+  #tabs.append(get_tab('graph', 'tab_top',     def_top_fig))
+  tabs.append(get_tab('graph', 'tab_trends',  def_trend_fig))
   #tabs.append(get_tab('data',  'tab_data',   df_rcnt.columns))
 
   tabs_content = [
@@ -636,7 +636,7 @@ app.layout = html.Div(
     html.Div(
       className = "app_right",
       children  = get_controls()
-    )
+    ),
   ]
 )
 
@@ -774,6 +774,8 @@ def comp_cntrl_cb(
 
     Input('chk_bx_cntrl',     'value'),
     Input('metric_cntrl',     'value'),
+
+    Input('tab_trends_fig_store', 'data'),
   ]
 )
 def md_contents_cb(
@@ -782,8 +784,14 @@ def md_contents_cb(
   state,
   cb_list,
   metric,
+
+  def_trend_fig,
 ):
   md_txt, top_fig, trend_fig = get_tab_contents(tab, view, state, cb_list, metric)
+
+  if (trend_fig == None):
+    print ("Using def fig")
+    trend_fig = def_trend_fig
   
   p_str = f"""
   md_txt:
@@ -797,13 +805,13 @@ def md_contents_cb(
   
   ===End===
   """
-  p_print(p_str)
+  #p_print(p_str)
   
   return (
     md_txt,
     #top_fig,
     trend_fig
-  )    
+  )
 
 """
 # ======================================================================
