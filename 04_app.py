@@ -319,9 +319,9 @@ def get_tab_contents(
     # =======================================================================
     #elif (tab == 'tab_top'):
     #print("get_tab_contents - tab_top")
-    #viz_type = 'top'
-    #df_plt = get_rlvt_data(df_rlvt_curr, viz_type, view, metric, cb_list)
-    #top_fig = px.bar(df_plt, orientation = 'h', x= metric, y = view_cuts[view])
+    viz_type = 'top'
+    df_plt = get_rlvt_data(df_rlvt_curr, viz_type, view, metric, cb_list)
+    top_fig = px.bar(df_plt, orientation = 'h', x= metric, y = view_cuts[view])
 
     # =======================================================================
     # Over-time values
@@ -495,7 +495,7 @@ def get_tabs():
   tabs = []
 
   tabs.append(get_tab('md',    'tab_smry',    def_smry_txt))
-  #tabs.append(get_tab('graph', 'tab_top',     def_top_fig))
+  tabs.append(get_tab('graph', 'tab_top',     def_top_fig))
   tabs.append(get_tab('graph', 'tab_trends',  def_trend_fig))
   #tabs.append(get_tab('data',  'tab_data',   df_rcnt.columns))
 
@@ -764,18 +764,19 @@ def comp_cntrl_cb(
 """
 @app.callback(
   [
-    Output('tab_smry_md',     'children'),
-    #Output('tab_top_fig',     'figure'),
-    Output('tab_trends_fig',  'figure'),
+    Output('tab_smry_md',         'children'),
+    Output('tab_top_fig',         'figure'),
+    Output('tab_trends_fig',      'figure'),
   ],
   [
-    Input('tabs',             'value'),
-    Input('view_cntrl',       'value'),
-    Input('st_dd_cntrl',      'value'),
+    Input('tabs',                 'value'),
+    Input('view_cntrl',           'value'),
+    Input('st_dd_cntrl',          'value'),
 
-    Input('chk_bx_cntrl',     'value'),
-    Input('metric_cntrl',     'value'),
+    Input('chk_bx_cntrl',         'value'),
+    Input('metric_cntrl',         'value'),
 
+    Input('tab_top_fig_store',    'data'),
     Input('tab_trends_fig_store', 'data'),
   ]
 )
@@ -786,14 +787,19 @@ def md_contents_cb(
   cb_list,
   metric,
 
+  def_top_fig,
   def_trend_fig,
 ):
   md_txt, top_fig, trend_fig = get_tab_contents(tab, view, state, cb_list, metric)
 
+  if (top_fig == None):
+    print ("Using def top fig")
+    trend_fig = def_top_fig
+
   if (trend_fig == None):
-    print ("Using def fig")
+    print ("Using def trend fig")
     trend_fig = def_trend_fig
-  
+
   p_str = f"""
   md_txt:
   -------
@@ -810,7 +816,7 @@ def md_contents_cb(
   
   return (
     md_txt,
-    #top_fig,
+    top_fig,
     trend_fig
   )
 
