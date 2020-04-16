@@ -3,3 +3,4 @@ covid19_us_2020-04-11.csv
 04_save.py
 *.csv
 test_app.py
+*.zip
