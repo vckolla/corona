@@ -151,7 +151,7 @@ def_town          = 'Middlesex, Massachusetts, US'
 
 """
 # ======================================================================
-# Get content for summary tab
+# Get mark-down content for summary tab
 # ======================================================================
 """
 def get_md(df, df_rcnt):
@@ -259,12 +259,9 @@ def get_tab_contents(
       (df['town']).isin(cb_list)
     ]
 
-    if (view == 'us'):
-      df_md, df_top, df_trend  = df_all, df_all, df_all
-    elif (view == 'state'):
-      df_md, df_top, df_trend  = df_sts, df_st, df_sts
-    elif (view == 'town'):
-      df_md, df_top, df_trend  = df_towns, df_towns, df_towns
+    if (view == 'us'):       df_md, df_top, df_trend  = df_all, df_all, df_all
+    elif (view == 'state'):  df_md, df_top, df_trend  = df_sts, df_st, df_sts
+    elif (view == 'town'):   df_md, df_top, df_trend  = df_towns, df_towns, df_towns
 
     df_md_curr  = df_md[df_md['date'] == rcnt_dt]
     df_top_curr = df_top[df_top['date'] == rcnt_dt]
@@ -279,8 +276,6 @@ def get_tab_contents(
     # =======================================================================
     if (view != 'town'):
       viz_type = 'top'
-      top_attribs = dict(
-      )
       df_plt_top = get_rlvt_data(df_top_curr, viz_type, view, metric, cb_list)
       top_fig = px.bar(df_plt_top, orientation = 'h', x = metric, y = view_cuts[view], height = 600)
     else:
@@ -293,11 +288,11 @@ def get_tab_contents(
     df_plt_trend = get_rlvt_data(df_trend, viz_type, view, metric, cb_list)
 
     if (predict_btn_clcks > 0):
-      df_pred = get_lstm_rslts(df_plt_trend, metric)
-      df_pred['type']       = 'predicted'
+      df_pred               = get_lstm_rslts(df_plt_trend, metric)
       df_plt_trend['type']  = 'actual'
-      df_plt_trend  = df_plt_trend.append(df_pred)
-      trend_fig     = px.line(df_plt_trend, x = 'date', y = metric, height = 600, color = 'type')
+      df_pred['type']       = 'predicted'
+      df_plt_trend          = df_plt_trend.append(df_pred)
+      trend_fig             = px.line(df_plt_trend, x = 'date', y = metric, height = 600, color = 'type')
     else:
       if (view == 'us'): trend_fig = px.line(df_plt_trend, x = 'date', y = metric, height = 600)
       else:              trend_fig = px.line(df_plt_trend, x = 'date', y = metric, height = 600, color = views_color[view])
@@ -449,8 +444,8 @@ def get_rlvt_data(
 # ======================================================================
 """
 def get_tabs():
-  def_smry_txt, def_top_fig, def_trend_fig, \
-  modal_txt = get_tab_contents(
+  def_smry_txt, def_top_fig, \
+  def_trend_fig, modal_txt = get_tab_contents(
     'us', f'{def_state}', ['None'], f'{def_metric}'
   )
   
@@ -602,6 +597,18 @@ def get_controls():
   
   return comps
 
+def get_modal():
+  comp = html.Div(
+    style      = {'textAlign': 'center',},
+    className  = 'modal-content',
+    children = [
+      html.Div(id = 'modal_cntrl', children = ['Model content']),
+      html.Hr(),
+      html.Button('Close', id='modal_close_button',)
+    ]
+  )
+  return comp
+
 """
 # ======================================================================
 # Define app
@@ -626,20 +633,10 @@ app.layout = html.Div(
       id        = 'modal_comp',
       className = 'modal',
       style     = {'display': 'none'},
-      children  = [
-        html.Div(
-          style      = {'textAlign': 'center',},
-          className  = 'modal-content',
-          children = [
-            html.Div(id = 'modal_cntrl', children = ['Model content']),
-            html.Hr(),
-            html.Button('Close', id='modal_close_button',)
-          ]
-        ),
-      ]
-    ) 
+      children  = get_modal(),
+    ),
   ]
-)
+) 
 
 """
 # ======================================================================
@@ -804,11 +801,9 @@ def md_contents_cb(
   modal_cls_btn_clcks,
 ):
   modal_style = {'display': 'none'}
-  #predict_btn_clcks, clear_btn_clcks, modal_cls_btn_clcks = 0, 0, 0
   predict_btn_clcks, modal_cls_btn_clcks = 0, 0
   changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]
   if ('predict_cntrl'       in changed_id): predict_btn_clcks   = 1
-  #if ('clr_predict_cntrl'   in changed_id): clear_btn_clcks     = 1
   if ('modal_close_button'  in changed_id): modal_cls_btn_clcks = 1
 
   p_str = f"""
@@ -826,7 +821,6 @@ def md_contents_cb(
   md_txt, top_fig, \
   trend_fig, modal_txt = get_tab_contents(
     view, state, cb_list, metric,
-    #predict_btn_clcks, clear_btn_clcks, modal_cls_btn_clcks,
     predict_btn_clcks, modal_cls_btn_clcks,
   )
   
