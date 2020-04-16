@@ -1,6 +1,5 @@
 import numpy                as np
 import pandas               as pd
-#import tensorflow           as tf
 
 from datetime              import datetime
 from keras.models          import Sequential
@@ -193,10 +192,9 @@ if __name__ == '__main__':
     # ======================================================================
     # Pre-done by the tracker tool
     # ======================================================================
-    today = datetime.now().date()
-    metric = 'incidence'
-
-    csv_file = f"covid19_us_{today}.csv"
+    today       = datetime.now().date()
+    metric      = 'incidence'
+    csv_file    = f"covid19_us_{today}.csv"
     df = pd.read_csv(csv_file)
 
     # metric
@@ -205,6 +203,7 @@ if __name__ == '__main__':
     df = df[df['date'] >= min_date]
     df = pd.DataFrame(df.groupby('date')[metric].sum())
     df['date'] = df.index
+    
     # predict
     df_out = get_lstm_rslts(df, metric)
     print(df_out)

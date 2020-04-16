@@ -156,19 +156,17 @@ def_town          = 'Middlesex, Massachusetts, US'
 """
 def get_md(df, df_rcnt):
   if (len(df) == 0 or len(df_rcnt) == 0):
-    min_date   = 'NA'
-    max_date   = 'NA'
-    days       = 0
-    num_states = 0
-    states     = 0
-    towns      = 0
-    num_towns  = 0
-    population = 0
-    cum_incids = 0
-    incid_rate = 0
-    incid_inc  = 0
-    cum_deaths = 0
-    death_rate = 0
+    ( min_date, max_date ) = ('NA', 'NA')
+    (
+    days, num_states, states, towns, 
+    num_towns, population, cum_incids, incid_rate, 
+    incid_inc, cum_deaths, death_rate
+    ) = \
+    (
+      0, 0, 0, 0,
+      0, 0, 0, 0,
+      0, 0, 0
+    )      
   else:    
     min_date   = df['date'].min().date()
     max_date   = df['date'].max().date()
