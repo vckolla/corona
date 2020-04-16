@@ -12,21 +12,11 @@ from numpy                 import array, mean, std
 
 from sklearn.metrics       import mean_squared_error
 import os
+import warnings
 
-os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
-
-# working space
-#def_metric = 'incidence'
-#def_state  = 'Massachusetts'
-#def_town   = 'Middlesex, Massachusetts, US'
-#min_date   = '2020-03-01'
-
-# column identification map
-#dim_cols       = [ 'town', 'date' ]
-#uni_var_cols   = [ def_metric ]
-#multi_var_cols = [ 'incidence_rate_pct', 'deaths', 'population' ]
-#all_cols       = dim_cols + multi_var_cols + uni_var_cols
-#drop_cols      = [ 'town' ]
+os.environ['TF_CPP_MIN_LOG_LEVEL']='3'
+with warnings.catch_warnings():
+	warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 # split a univariate dataset into train/test sets
 def train_test_split(data, n_test):
@@ -203,16 +193,13 @@ def get_lstm_rslts(df_in, metric):
     # Prep data
     pred_dts = df['date'][-n_test:]
     data = df['y'].values
-    print(f"l3: {data}")
     
     score, test, pred = walk_forward_validation(data, n_test, config)
     df_out = pd.DataFrame(columns = ['date', metric, 'type'])
     op = zip(pred_dts, test, pred)
     for tpl in op:
-        print(tpl)
         tpl_2 = (tpl[0], tpl[2][0], 'predicted')
         df_out = df_out.append(pd.Series(tpl_2, index=df_out.columns), ignore_index = True)
-    print("l7")
 
     df_out.rename(columns=old_col_names, inplace = True)
     df_out.index = df_out['date']

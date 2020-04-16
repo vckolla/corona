@@ -51,6 +51,10 @@ os.environ["TOP"] = TOP
 from bootstrap import *
 from IPython.core.display import display
 
+os.environ['TF_CPP_MIN_LOG_LEVEL']='3'
+with warnings.catch_warnings():
+	warnings.filterwarnings("ignore", category=DeprecationWarning)
+
 """
 # ======================================================================
 # Get data
@@ -231,7 +235,7 @@ def get_tab_contents(
   metric,
   
   predict_btn_clcks   = 0,
-  clear_btn_clcks     = 0,
+  #clear_btn_clcks     = 0,
   modal_cls_btn_clcks = 0,
 ):
   # =======================================================================
@@ -290,28 +294,12 @@ def get_tab_contents(
     viz_type = 'trend'
     df_plt_trend = get_rlvt_data(df_trend, viz_type, view, metric, cb_list)
 
-    def get_val(row):
-      return row[metric]*1.1
-
     if (predict_btn_clcks > 0):
-      if (1 == 0):
-        df_pred = df_plt_trend.copy()
-        df_pred[metric] = df_pred.apply(lambda row: get_val(row), axis=1)
-        df_plt_trend['type'] = 'actual'
-        df_plt_trend = df_plt_trend.append(df_pred)
-        #modal_txt = "This is a test"
-      else:
-        print("1")
-        df_pred = get_lstm_rslts(df_plt_trend, metric)
-        df_pred['type'] = 'predicted'
-        print("2")
-        df_plt_trend['type'] = 'actual'
-        print(f"3\n {df_plt_trend}")
-        print(f"3\n {df_pred}")
-        df_plt_trend = df_plt_trend.append(df_pred)
-        print(f"3\n {df_plt_trend}")
-      trend_fig = px.line(df_plt_trend, x = 'date', y = metric, height = 600, color = 'type')
-      print("4")
+      df_pred = get_lstm_rslts(df_plt_trend, metric)
+      df_pred['type']       = 'predicted'
+      df_plt_trend['type']  = 'actual'
+      df_plt_trend  = df_plt_trend.append(df_pred)
+      trend_fig     = px.line(df_plt_trend, x = 'date', y = metric, height = 600, color = 'type')
     else:
       if (view == 'us'): trend_fig = px.line(df_plt_trend, x = 'date', y = metric, height = 600)
       else:              trend_fig = px.line(df_plt_trend, x = 'date', y = metric, height = 600, color = views_color[view])
@@ -583,12 +571,12 @@ def get_cntrl_comp(
           className = "button_style submit",
           n_clicks  = 0,
         ),
-        html.Button(
-          'Clear', 
-          id        = f'clr_{cntrl_id}',
-          className = "button_style clear",
-          n_clicks  = 0,
-        )
+        #html.Button(
+        #  'Clear', 
+        #  id        = f'clr_{cntrl_id}',
+        #  className = "button_style clear",
+        #  n_clicks  = 0,
+        #)
       ]
     )
 
@@ -757,8 +745,8 @@ def comp_cntrl_cb(
   
   elif (tab == 'tab_trends'):
     if   (view == 'us'):      disp_vec  = [0, 0, 1, 1]
-    elif (view == 'state'):   disp_vec  = [0, 1, 1, 0]
-    elif (view == 'town'):    disp_vec  = [1, 1, 1, 0]
+    elif (view == 'state'):   disp_vec  = [0, 1, 1, 1]
+    elif (view == 'town'):    disp_vec  = [1, 1, 1, 1]
   
   disp_cntrl = get_disp_cntrl(disp_vec)
   
@@ -800,7 +788,7 @@ def comp_cntrl_cb(
     Input('tab_trends_fig_store', 'data'),
 
     Input('predict_cntrl',        'n_clicks'),
-    Input('clr_predict_cntrl',    'n_clicks'),
+    #Input('clr_predict_cntrl',    'n_clicks'),
     Input('modal_close_button',   'n_clicks'),
   ]
 )
@@ -814,14 +802,15 @@ def md_contents_cb(
   def_trend_fig,
 
   predict_btn_clcks,
-  clear_btn_clcks,
+  #clear_btn_clcks,
   modal_cls_btn_clcks,
 ):
   modal_style = {'display': 'none'}
-  predict_btn_clcks, clear_btn_clcks, modal_cls_btn_clcks = 0, 0, 0
+  #predict_btn_clcks, clear_btn_clcks, modal_cls_btn_clcks = 0, 0, 0
+  predict_btn_clcks, modal_cls_btn_clcks = 0, 0
   changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]
   if ('predict_cntrl'       in changed_id): predict_btn_clcks   = 1
-  if ('clr_predict_cntrl'   in changed_id): clear_btn_clcks     = 1
+  #if ('clr_predict_cntrl'   in changed_id): clear_btn_clcks     = 1
   if ('modal_close_button'  in changed_id): modal_cls_btn_clcks = 1
 
   p_str = f"""
@@ -832,7 +821,6 @@ def md_contents_cb(
   cb_list             = {cb_list}
   metric              = {metric}
   predict_btn_clcks   = {predict_btn_clcks}
-  clear_btn_clcks     = {clear_btn_clcks}
   modal_cls_btn_clcks = {modal_cls_btn_clcks}
   """
   print(p_str)
@@ -840,7 +828,8 @@ def md_contents_cb(
   md_txt, top_fig, \
   trend_fig, modal_txt = get_tab_contents(
     view, state, cb_list, metric,
-    predict_btn_clcks, clear_btn_clcks, modal_cls_btn_clcks,
+    #predict_btn_clcks, clear_btn_clcks, modal_cls_btn_clcks,
+    predict_btn_clcks, modal_cls_btn_clcks,
   )
   
   if (top_fig == None):   top_fig = def_top_fig
