@@ -282,7 +282,7 @@ def get_tab_contents(
       top_attribs = dict(
       )
       df_plt_top = get_rlvt_data(df_top_curr, viz_type, view, metric, cb_list)
-      top_fig = px.bar(df_plt_top, orientation = 'h', x = metric, y = view_cuts[view], height = 650)
+      top_fig = px.bar(df_plt_top, orientation = 'h', x = metric, y = view_cuts[view], height = 600)
     else:
       top_fig = None
 
