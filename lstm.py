@@ -204,7 +204,7 @@ if __name__ == '__main__':
     df = df[['date', metric]]
     df = df[df['date'] >= min_date]
     df = pd.DataFrame(df.groupby('date')[metric].sum())
-    
+    df['date'] = df.index
     # predict
     df_out = get_lstm_rslts(df, metric)
     print(df_out)

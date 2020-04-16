@@ -566,7 +566,7 @@ def get_cntrl_comp(
         ---
         """),
         html.Button(
-          'Get estimated trend',
+          'Get Trend (Algo = LSTM)',
           id        = cntrl_id,
           className = "button_style submit",
           n_clicks  = 0,
