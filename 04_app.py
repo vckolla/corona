@@ -29,6 +29,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import os
 import sys
 import pandas               as pd
+from   lstm                 import *
+import traceback
 
 import dash_table
 import dash
@@ -292,20 +294,31 @@ def get_tab_contents(
       return row[metric]*1.1
 
     if (predict_btn_clcks > 0):
-      df_pred = df_plt_trend.copy()
-      df_pred[metric] = df_pred.apply(lambda row: get_val(row), axis=1)
-      df_pred['type'] = 'predicted'
-      df_plt_trend['type'] = 'actual'
-      df_plt_trend = df_plt_trend.append(df_pred)
-      #modal_txt = "This is a test"
+      if (1 == 0):
+        df_pred = df_plt_trend.copy()
+        df_pred[metric] = df_pred.apply(lambda row: get_val(row), axis=1)
+        df_plt_trend['type'] = 'actual'
+        df_plt_trend = df_plt_trend.append(df_pred)
+        #modal_txt = "This is a test"
+      else:
+        print("1")
+        df_pred = get_lstm_rslts(df_plt_trend, metric)
+        df_pred['type'] = 'predicted'
+        print("2")
+        df_plt_trend['type'] = 'actual'
+        print(f"3\n {df_plt_trend}")
+        print(f"3\n {df_pred}")
+        df_plt_trend = df_plt_trend.append(df_pred)
+        print(f"3\n {df_plt_trend}")
       trend_fig = px.line(df_plt_trend, x = 'date', y = metric, height = 600, color = 'type')
+      print("4")
     else:
       if (view == 'us'): trend_fig = px.line(df_plt_trend, x = 'date', y = metric, height = 600)
       else:              trend_fig = px.line(df_plt_trend, x = 'date', y = metric, height = 600, color = views_color[view])
 
     if (modal_cls_btn_clcks > 0): modal_txt = ""
-  except:
-    print("Some error occurred")
+  except Exception as err:
+    print(f"Exception:\n{traceback.format_exc()}")
   finally:
     return ( md_txt, top_fig, trend_fig, modal_txt )
   
@@ -850,4 +863,4 @@ def md_contents_cb(
 #debug_flag = False
 debug_flag = True
 if __name__ == '__main__':
-  app.run_server(debug=debug_flag)
+  app.run_server(debug=debug_flag, threaded=False)
