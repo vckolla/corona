@@ -127,7 +127,7 @@ def walk_forward_validation(data, n_test, cfg):
     
     # estimate prediction error
     error = measure_rmse(test, predictions)
-    print(f"RMSE = {error:.0f}")
+    #print(f"RMSE = {error:.0f}")
     
     return error, test, predictions
 
@@ -151,23 +151,6 @@ def summarize_scores(scores):
     # box and whisker plot
     pyplot.boxplot(scores)
     pyplot.show()
-
-def prep_data(df_in, metric):
-    """prep_data - read data, format & return dataframe
-    """
-    # rename map
-    new_col_names = {
-        metric:'y'
-    }
-
-    # rename
-    df = df_in.rename(columns=new_col_names)
-
-    ## set index (for time-series modeling)
-    #df = df.set_index('date')
-    #df.index = pd.to_datetime(df.index)
-
-    return df
 
 def get_lstm_rslts(df_in, metric):
     """run_all - orchestrator
@@ -214,16 +197,13 @@ if __name__ == '__main__':
     metric = 'incidence'
 
     csv_file = f"covid19_us_{today}.csv"
-    #print(csv_file)
     df = pd.read_csv(csv_file)
 
     # metric
     min_date = '2020-03-01'
     df = df[['date', metric]]
     df = df[df['date'] >= min_date]
-    #print(df)
     df = pd.DataFrame(df.groupby('date')[metric].sum())
-    #print(df_2)
     
     # predict
     df_out = get_lstm_rslts(df, metric)

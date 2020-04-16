@@ -566,7 +566,7 @@ def get_cntrl_comp(
         ---
         """),
         html.Button(
-          'Is trend flattening ?',
+          'Get estimated trend',
           id        = cntrl_id,
           className = "button_style submit",
           n_clicks  = 0,
