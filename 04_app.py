@@ -61,7 +61,7 @@ min_date  = '2020-03-01'
 #con        = sql_svr_con
 sql        = f"select * from covid19_us_mds"
 #df         = get_df_from_sql(sql, con)
-df         = pd.read_csv('covid19_us_2020-04-15.csv')
+df         = pd.read_csv('covid19_us_2020-04-16.csv')
 df['date'] = df['date'].astype('datetime64[ns]')
 df         = df[df['date'] >= min_date]
 
@@ -83,41 +83,12 @@ tab_dict = {
   'tab_data':    f"Data",
 }
 
-dim_desc = [
-  'States',
-  'County/Town',
-  'Date'
-]
-
-dim_cols = [
-  'state',
-  'town',
-  'date',
-]
-
-view_desc = [
-  'US',
-  'State',
-  'County/Town'
-]
-
-views = [
-  'us',
-  'state',
-  'town'
-]
-
-view_cuts = [
-  'state',
-  'town',
-  ''
-]
-
-view_color_col = [
-  '',
-  'state',
-  'town'
-]
+dim_desc        = [ 'States', 'County/Town', 'Date' ]
+dim_cols        = [ 'state',  'town',        'date']
+view_desc       = [ 'US', 'State', 'County' ]
+views           = [ 'us', 'state', 'town' ]
+view_cuts       = [ 'state', 'town', '' ]
+view_color_col  = [ '', 'state', 'town' ]
 
 measure_cols = [
   'population',
@@ -256,6 +227,10 @@ def get_tab_contents(
   state,
   cb_list,
   metric,
+  
+  predict_btn_clcks   = 0,
+  clear_btn_clcks     = 0,
+  modal_cls_btn_clcks = 0,
 ):
   # =======================================================================
   # Defaults
@@ -263,21 +238,11 @@ def get_tab_contents(
   if (cb_list == None): cb_list = ['None']
   if (metric == None):  metric = 'incidence'
   
-  p_str = f"""
-  get_tab_contents
-  ---------------
-  view    = {view}
-  state   = {state}
-  cb_list = {cb_list}
-  metric  = {metric}
-  """
-  #p_print(p_str)
-  
   try:
     # =======================================================================
     # Initializations
     # =======================================================================
-    md_txt, top_fig, trend_fig = "Empty", None, None
+    md_txt, top_fig, trend_fig, modal_txt = "Empty", None, None, ""
 
     # =======================================================================
     # Gather data
@@ -313,13 +278,7 @@ def get_tab_contents(
       top_attribs = dict(
       )
       df_plt_top = get_rlvt_data(df_top_curr, viz_type, view, metric, cb_list)
-      top_fig = px.bar(
-        df_plt_top,
-        orientation = 'h',
-        x           = metric, 
-        y           = view_cuts[view], 
-        height      = 650
-      )
+      top_fig = px.bar(df_plt_top, orientation = 'h', x = metric, y = view_cuts[view], height = 650)
     else:
       top_fig = None
 
@@ -328,33 +287,27 @@ def get_tab_contents(
     # =======================================================================
     viz_type = 'trend'
     df_plt_trend = get_rlvt_data(df_trend, viz_type, view, metric, cb_list)
-    trend_attribs = dict(
-    )
-    if (view == 'us'): 
-      trend_fig = px.line(
-        df_plt_trend,
-        x       = 'date', 
-        y       = metric, 
-        height  = 600
-      )
-    else:
-      trend_fig = px.line(
-        df_plt_trend,
-        x       = 'date', 
-        y       = metric,
-        color   = views_color[view],
-        height  = 600
-      )
 
+    def get_val(row):
+      return row[metric]*1.1
+
+    if (predict_btn_clcks > 0):
+      df_pred = df_plt_trend.copy()
+      df_pred[metric] = df_pred.apply(lambda row: get_val(row), axis=1)
+      df_pred['type'] = 'predicted'
+      df_plt_trend['type'] = 'actual'
+      df_plt_trend = df_plt_trend.append(df_pred)
+      #modal_txt = "This is a test"
+      trend_fig = px.line(df_plt_trend, x = 'date', y = metric, height = 600, color = 'type')
+    else:
+      if (view == 'us'): trend_fig = px.line(df_plt_trend, x = 'date', y = metric, height = 600)
+      else:              trend_fig = px.line(df_plt_trend, x = 'date', y = metric, height = 600, color = views_color[view])
+
+    if (modal_cls_btn_clcks > 0): modal_txt = ""
   except:
-    print("Some error occurred")  
-  
+    print("Some error occurred")
   finally:
-    return (
-      md_txt, 
-      top_fig, 
-      trend_fig
-    )
+    return ( md_txt, top_fig, trend_fig, modal_txt )
   
 """
 # ======================================================================
@@ -377,8 +330,8 @@ def get_tab(tab_type, name, init_val):
   if (tab_type == 'md'):
     child_comp = [
       dcc.Markdown(
-        id = f"{name}_md",
-        children = init_val
+        id        = f"{name}_md",
+        children  = init_val
       )
     ]
   elif (tab_type == 'graph'):
@@ -401,8 +354,8 @@ def get_tab(tab_type, name, init_val):
         page_size     = 15,
         page_action   = 'custom',
         style_data_conditional  =[{
-            'if':{'row_index':'odd'},
-            'backgroundColor': 'rgb(248,248,248)'
+          'if': {'row_index':'odd'},
+          'backgroundColor': 'rgb(248,248,248)'
         }],
         style_cell    = {'fontSize':14, 'font-family':'Century Gothic'},
         style_header  = {
@@ -497,11 +450,9 @@ def get_rlvt_data(
 # ======================================================================
 """
 def get_tabs():
-  def_smry_txt, def_top_fig, def_trend_fig = get_tab_contents(
-      'us',
-      f'{def_state}',
-      ['None'],
-      f'{def_metric}',
+  def_smry_txt, def_top_fig, def_trend_fig, \
+  modal_txt = get_tab_contents(
+    'us', f'{def_state}', ['None'], f'{def_metric}'
   )
   
   tabs = []
@@ -534,8 +485,8 @@ def get_cntrl_comp(
     disp_dict,
     style = 'in-line block'
 ):
-  comp_id       = f"{name}_comp"
-  cntrl_id      = f"{name}_cntrl"
+  comp_id  = f"{name}_comp"
+  cntrl_id = f"{name}_cntrl"
   if (val_list != ''):
     cntrl_options = [{'label': disp_dict[i], 'value': i} for i in val_list]
     init_val      = val_list[0]
@@ -617,11 +568,13 @@ def get_cntrl_comp(
           'Is trend flattening ?',
           id        = cntrl_id,
           className = "button_style submit",
+          n_clicks  = 0,
         ),
         html.Button(
           'Clear', 
-          id        = f'{cntrl_id}_clr',
+          id        = f'clr_{cntrl_id}',
           className = "button_style clear",
+          n_clicks  = 0,
         )
       ]
     )
@@ -669,6 +622,23 @@ app.layout = html.Div(
       className = "app_right",
       children  = get_controls()
     ),
+
+    html.Div(
+      id        = 'modal_comp',
+      className = 'modal',
+      style     = {'display': 'none'},
+      children  = [
+        html.Div(
+          style      = {'textAlign': 'center',},
+          className  = 'modal-content',
+          children = [
+            html.Div(id = 'modal_cntrl', children = ['Model content']),
+            html.Hr(),
+            html.Button('Close', id='modal_close_button',)
+          ]
+        ),
+      ]
+    ) 
   ]
 )
 
@@ -774,8 +744,8 @@ def comp_cntrl_cb(
   
   elif (tab == 'tab_trends'):
     if   (view == 'us'):      disp_vec  = [0, 0, 1, 1]
-    elif (view == 'state'):   disp_vec  = [0, 1, 1, 1]
-    elif (view == 'town'):    disp_vec  = [1, 1, 1, 1]
+    elif (view == 'state'):   disp_vec  = [0, 1, 1, 0]
+    elif (view == 'town'):    disp_vec  = [1, 1, 1, 0]
   
   disp_cntrl = get_disp_cntrl(disp_vec)
   
@@ -802,6 +772,9 @@ def comp_cntrl_cb(
     Output('tab_smry_md',         'children'),
     Output('tab_top_fig',         'figure'),
     Output('tab_trends_fig',      'figure'),
+
+    Output('modal_comp',          'style'),
+    Output('modal_cntrl',         'children'),
   ],
   [
     Input('view_cntrl',           'value'),
@@ -812,6 +785,10 @@ def comp_cntrl_cb(
 
     Input('tab_top_fig_store',    'data'),
     Input('tab_trends_fig_store', 'data'),
+
+    Input('predict_cntrl',        'n_clicks'),
+    Input('clr_predict_cntrl',    'n_clicks'),
+    Input('modal_close_button',   'n_clicks'),
   ]
 )
 def md_contents_cb(
@@ -822,39 +799,44 @@ def md_contents_cb(
 
   def_top_fig,
   def_trend_fig,
+
+  predict_btn_clcks,
+  clear_btn_clcks,
+  modal_cls_btn_clcks,
 ):
-  md_txt, top_fig, trend_fig = get_tab_contents(view, state, cb_list, metric)
-
-  if (top_fig == None):
-    print ("Using def top fig")
-    top_fig = def_top_fig
-
-  if (trend_fig == None):
-    print ("Using def trend fig")
-    trend_fig = def_trend_fig
+  modal_style = {'display': 'none'}
+  predict_btn_clcks, clear_btn_clcks, modal_cls_btn_clcks = 0, 0, 0
+  changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]
+  if ('predict_cntrl'       in changed_id): predict_btn_clcks   = 1
+  if ('clr_predict_cntrl'   in changed_id): clear_btn_clcks     = 1
+  if ('modal_close_button'  in changed_id): modal_cls_btn_clcks = 1
 
   p_str = f"""
-  md_txt:
-  -------
-  
-  {md_txt}
-
-  top_fig:
-  ----------
-  {top_fig}
-
-  trend_fig:
-  ----------
-  {trend_fig}
-  
-  ===End===
+  get_tab_contents
+  ---------------
+  view                = {view}
+  state               = {state}
+  cb_list             = {cb_list}
+  metric              = {metric}
+  predict_btn_clcks   = {predict_btn_clcks}
+  clear_btn_clcks     = {clear_btn_clcks}
+  modal_cls_btn_clcks = {modal_cls_btn_clcks}
   """
-  #p_print(p_str)
+  print(p_str)
+
+  md_txt, top_fig, \
+  trend_fig, modal_txt = get_tab_contents(
+    view, state, cb_list, metric,
+    predict_btn_clcks, clear_btn_clcks, modal_cls_btn_clcks,
+  )
   
+  if (top_fig == None):   top_fig = def_top_fig
+  if (trend_fig == None): trend_fig = def_trend_fig
+  if (modal_txt != ""):   modal_style = {'display': 'block'}
+
   return (
-    md_txt,
-    top_fig,
-    trend_fig
+    md_txt, top_fig, trend_fig,
+    modal_style, modal_txt,
   )
 
 """
