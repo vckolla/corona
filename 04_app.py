@@ -33,11 +33,13 @@ import sys
 import pandas               as pd
 import traceback
 import dash_table
+import dash_table.FormatTemplate as dft
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
 import plotly.express       as px
 from   dash.dependencies    import Input, Output
+from   dash_table.Format    import Format, Scheme, Sign, Symbol
 from lstm                 import *
 TOP = r"C:/Users/vishk/Desktop/WIP/2020/2020 Q1/07 - Self Learning"
 sys.path.append(f"{TOP}/lib")
@@ -247,7 +249,7 @@ def get_tab_contents(
         # =======================================================================
         # Initializations
         # =======================================================================
-        md_txt, top_fig, trend_fig, modal_txt = "Empty", None, None, ""
+        md_txt, top_fig, trend_fig, tab_data, modal_txt = "Empty", None, None, df_rcnt[:100], ""
 
         # =======================================================================
         # Gather data
@@ -260,12 +262,9 @@ def get_tab_contents(
             (df['town']).isin(cb_list)
         ]
 
-        if (view == 'us'):
-            df_md, df_top, df_trend = df_all, df_all, df_all
-        elif (view == 'state'):
-            df_md, df_top, df_trend = df_sts, df_st, df_sts
-        elif (view == 'town'):
-            df_md, df_top, df_trend = df_towns, df_towns, df_towns
+        if (view == 'us'):       df_md, df_top, df_trend = df_all, df_all, df_all
+        elif (view == 'state'):  df_md, df_top, df_trend = df_sts, df_st, df_sts
+        elif (view == 'town'):   df_md, df_top, df_trend = df_towns, df_towns, df_towns
 
         df_md_curr = df_md[df_md['date'] == rcnt_dt]
         df_top_curr = df_top[df_top['date'] == rcnt_dt]
@@ -302,21 +301,27 @@ def get_tab_contents(
             df_pred['type'] = 'predicted'
             df_plt_trend = df_plt_trend.append(df_pred)
             trend_fig = px.line(df_plt_trend, x='date',
-                                y=metric, height=600, color='type')
+                                y=metric, height=600, color='type',
+                                )
         else:
             if (view == 'us'):
                 trend_fig = px.line(df_plt_trend, x='date',
-                                    y=metric, height=600)
+                                    y=metric, height=600,                                    
+                                    )
             else:
                 trend_fig = px.line(
-                    df_plt_trend, x='date', y=metric, height=600, color=views_color[view])
-
+                    df_plt_trend, x='date', y=metric, 
+                    height=600, color=views_color[view],
+                    )
+        
         if (modal_cls_btn_clcks > 0):
             modal_txt = ""
+        
+        tab_data = df_plt_trend
     except Exception as err:
         print(f"Exception:\n{traceback.format_exc()}")
     finally:
-        return (md_txt, top_fig, trend_fig, modal_txt)
+        return (md_txt, top_fig, trend_fig, tab_data, modal_txt)
 
 
 """
@@ -360,21 +365,30 @@ def get_tab(tab_type, name, init_val):
     elif (tab_type == 'data'):
         child_comp = [
             dash_table.DataTable(
-                id='{name}_dat_tbl',
-                columns=[{'name': i, "id": i} for i in (init_val)],
+                id=f'{name}_dat_tbl',
+                columns=[{'name': i, "id": i} for i in (init_val.columns)],
+                data=init_val.to_dict('records'),
                 page_current=0,
-                page_size=15,
+                page_size=10,
                 page_action='custom',
+                #filter_action='native',
+                #sort_action='native',
                 style_data_conditional=[{
-                    'if': {'row_index': 'odd'},
-                    'backgroundColor': 'rgb(248,248,248)'
-                }],
+                  'if': {'row_index': 'odd'},
+                  'backgroundColor': 'rgb(248,248,248)',
+                  },
+                  {
+                    'textAlign': 'center',
+                  }
+                ],
+                style_as_list_view=True,
                 style_cell={'fontSize': 14, 'font-family': 'Century Gothic'},
                 style_header={
-                    'backgroundColor': 'rgb(0, 102, 255)',
-                    'fontWeight':      'bold',
-                    'color':       'white',
-                },
+                    'backgroundColor':  'rgb(0, 102, 255)',
+                    'fontWeight':       'bold',
+                    'color':            'white',
+                    'textAlign':        'center',
+                },                
             )
         ]
 
@@ -476,16 +490,16 @@ def get_rlvt_data(
 
 def get_tabs():
     def_smry_txt, def_top_fig, \
-        def_trend_fig, modal_txt = get_tab_contents(
-            'us', f'{def_state}', ['None'], f'{def_metric}'
-        )
+    def_trend_fig, tab_data, modal_txt = get_tab_contents(
+      'us', f'{def_state}', ['None'], f'{def_metric}'
+    )
 
     tabs = []
 
     tabs.append(get_tab('md',    'tab_smry',    def_smry_txt))
     tabs.append(get_tab('graph', 'tab_top',     def_top_fig))
     tabs.append(get_tab('graph', 'tab_trends',  def_trend_fig))
-    #tabs.append(get_tab('data',  'tab_data',   df_rcnt.columns))
+    tabs.append(get_tab('data',  'tab_data',    tab_data))
 
     tabs_content = [
         dcc.Tabs(
@@ -606,6 +620,12 @@ def get_cntrl_comp(
                 # )
             ]
         )
+    elif (cntrl == 'save_state'):
+        comp = html.Div(
+            id=cntrl_id,
+            style={'display': 'none'},
+            children={'name':'value'}
+        )
 
     return comp
 
@@ -625,18 +645,13 @@ def get_controls():
 
     comps = []
 
-    comps.append(get_cntrl_comp(dcc.RadioItems,  'view',
-                                views,          views_dict,    in_line))
-    comps.append(get_cntrl_comp(dcc.Dropdown,    'st_dd',
-                                states,         states_dict,   in_line))
-    comps.append(get_cntrl_comp(dcc.Checklist,   'chk_bx',
-                                states,         states_dict,   block))
-    comps.append(get_cntrl_comp(dcc.RadioItems,  'metric',
-                                measure_cols,   measures_dict, block))
-    comps.append(get_cntrl_comp(html.Button,     'predict',
-                                blank,          blank,         in_line))
-    comps.append(get_cntrl_comp(dcc.Markdown,    blank,
-                                blank,          blank,         block))
+    comps.append(get_cntrl_comp(dcc.RadioItems,  'view',    views,          views_dict,    in_line))
+    comps.append(get_cntrl_comp(dcc.Dropdown,    'st_dd',   states,         states_dict,   in_line))
+    comps.append(get_cntrl_comp(dcc.Checklist,   'chk_bx',  states,         states_dict,   block))
+    comps.append(get_cntrl_comp(dcc.RadioItems,  'metric',  measure_cols,   measures_dict, block))
+    comps.append(get_cntrl_comp(html.Button,     'predict', blank,          blank,         in_line))
+    comps.append(get_cntrl_comp(dcc.Markdown,    blank,     blank,          blank,         block))
+    #comps.append(get_cntrl_comp('save_state',    'sv_df',   blank,          blank,         block))
 
     return comps
 
@@ -773,40 +788,34 @@ def comp_cntrl_cb(
     disp_towns = sorted(df[df['state'] == state]['town'].unique())
     cb_val = disp_states
 
-    if (view == 'state'):
-        cb_val = disp_states
-    elif (view == 'town'):
-        cb_val = disp_towns
+    if (view == 'state'):   cb_val = disp_states
+    elif (view == 'town'):  cb_val = disp_towns
 
     cb_options = [{'label': i, 'value': i} for i in cb_val]
 
     # =======================================================================
     # Display Control
     # =======================================================================
-    disp_vec = [0, 0, 0]
+    disp_vec = [0, 0, 0, 0]
     if (tab == 'tab_smry'):
-        if (view == 'us'):
-            disp_vec = [0, 0, 0, 0]
-        elif (view == 'state'):
-            disp_vec = [0, 1, 0, 0]
-        elif (view == 'town'):
-            disp_vec = [1, 1, 0, 0]
+        if (view == 'us'):       disp_vec = [0, 0, 0, 0]
+        elif (view == 'state'):  disp_vec = [0, 1, 0, 0]
+        elif (view == 'town'):   disp_vec = [1, 1, 0, 0]
 
     elif (tab == 'tab_top'):
-        if (view == 'us'):
-            disp_vec = [0, 0, 1, 0]
-        elif (view == 'state'):
-            disp_vec = [1, 0, 1, 0]
-        elif (view == 'town'):
-            disp_vec = [1, 0, 1, 0]
+        if (view == 'us'):       disp_vec = [0, 0, 1, 0]
+        elif (view == 'state'):  disp_vec = [1, 0, 1, 0]
+        elif (view == 'town'):   disp_vec = [1, 0, 1, 0]
 
     elif (tab == 'tab_trends'):
-        if (view == 'us'):
-            disp_vec = [0, 0, 1, 1]
-        elif (view == 'state'):
-            disp_vec = [0, 1, 1, 1]
-        elif (view == 'town'):
-            disp_vec = [1, 1, 1, 1]
+        if (view == 'us'):       disp_vec = [0, 0, 1, 1]
+        elif (view == 'state'):  disp_vec = [0, 1, 1, 1]
+        elif (view == 'town'):   disp_vec = [1, 1, 1, 1]
+
+    elif (tab == 'tab_data'):
+        if (view == 'us'):       disp_vec = [0, 0, 1, 0]
+        elif (view == 'state'):  disp_vec = [0, 1, 1, 0]
+        elif (view == 'town'):   disp_vec = [1, 1, 1, 0]
 
     disp_cntrl = get_disp_cntrl(disp_vec)
 
@@ -829,13 +838,13 @@ def comp_cntrl_cb(
 # Tab Contents call back
 # ======================================================================
 """
-
-
 @app.callback(
     [
         Output('tab_smry_md',         'children'),
         Output('tab_top_fig',         'figure'),
         Output('tab_trends_fig',      'figure'),
+        Output('tab_data_dat_tbl',    'columns'),
+        Output('tab_data_dat_tbl',    'data'),
 
         Output('modal_comp',          'style'),
         Output('modal_cntrl',         'children'),
@@ -853,20 +862,26 @@ def comp_cntrl_cb(
         Input('predict_cntrl',        'n_clicks'),
         #Input('clr_predict_cntrl',    'n_clicks'),
         Input('modal_close_button',   'n_clicks'),
+
+        Input('tab_data_dat_tbl', 'page_current'),
+        Input('tab_data_dat_tbl', 'page_size'),
     ]
 )
 def md_contents_cb(
-    view,
-    state,
-    cb_list,
-    metric,
+  view,
+  state,
+  cb_list,
+  metric,
 
-    def_top_fig,
-    def_trend_fig,
+  def_top_fig,
+  def_trend_fig,
 
-    predict_btn_clcks,
-    # clear_btn_clcks,
-    modal_cls_btn_clcks,
+  predict_btn_clcks,
+  # clear_btn_clcks,
+  modal_cls_btn_clcks,
+
+  page_current, 
+  page_size,
 ):
     modal_style = {'display': 'none'}
     predict_btn_clcks, modal_cls_btn_clcks = 0, 0
@@ -888,24 +903,34 @@ def md_contents_cb(
   """
     print(p_str)
 
+    tab_data_df = df_rcnt[:100]
     md_txt, top_fig, \
-        trend_fig, modal_txt = get_tab_contents(
-            view, state, cb_list, metric,
-            predict_btn_clcks, modal_cls_btn_clcks,
-        )
-
-    if (top_fig == None):
-        top_fig = def_top_fig
-    if (trend_fig == None):
-        trend_fig = def_trend_fig
-    if (modal_txt != ""):
-        modal_style = {'display': 'block'}
-
-    return (
-        md_txt, top_fig, trend_fig,
-        modal_style, modal_txt,
+    trend_fig, tab_data_df, modal_txt = get_tab_contents(
+      view, state, cb_list, metric,
+      predict_btn_clcks, modal_cls_btn_clcks,
     )
 
+    if (top_fig == None):   top_fig = def_top_fig
+    if (trend_fig == None): trend_fig = def_trend_fig
+    if (modal_txt != ""):   modal_style = {'display': 'block'}
+    
+    col_fmt = dft.Format(
+      nully='NA',
+      precision=2,
+      scheme=Scheme.fixed,
+    )
+
+    cols=[{'name': i, "id": i, 'format': col_fmt} for i in (tab_data_df.columns)]
+    data=tab_data_df.iloc[
+      page_current       * page_size : 
+      (page_current + 1) * page_size
+    ].to_dict('records')
+
+    return (
+      md_txt, top_fig, trend_fig,
+      cols, data, 
+      modal_style, modal_txt,
+    )
 
 """
 # ======================================================================
