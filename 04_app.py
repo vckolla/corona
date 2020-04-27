@@ -27,18 +27,10 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 # ======================================================================
 """
 
-
-"""
-# ======================================================================
-# Imports & Accelerators
-# ======================================================================
-"""
 from IPython.core.display import display
-from bootstrap import *
 import os
 import sys
 import pandas               as pd
-from   lstm                 import *
 import traceback
 import dash_table
 import dash
@@ -46,6 +38,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 import plotly.express       as px
 from   dash.dependencies    import Input, Output
+from lstm                 import *
 TOP = r"C:/Users/vishk/Desktop/WIP/2020/2020 Q1/07 - Self Learning"
 sys.path.append(f"{TOP}/lib")
 os.environ["TOP"] = TOP
@@ -53,6 +46,8 @@ os.environ["TOP"] = TOP
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=DeprecationWarning)
+
+from bootstrap import *
 
 """
 # ======================================================================
@@ -288,7 +283,10 @@ def get_tab_contents(
             df_plt_top = get_rlvt_data(
                 df_top_curr, viz_type, view, metric, cb_list)
             top_fig = px.bar(df_plt_top, orientation='h',
-                             x=metric, y=view_cuts[view], height=600)
+                             x=metric, y=view_cuts[view], 
+                             height=600, text=metric)
+            top_fig.update_traces(texttemplate='%{text:.2s}', textposition='outside')
+            top_fig.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')                            
         else:
             top_fig = None
 
@@ -663,7 +661,7 @@ def get_modal():
 """
 app = dash.Dash(__name__)
 app.config.suppress_callback_exceptions = True
-app.title = "US COVID19 Tracker"
+app.title = "Me:dha:.ai US COVID19 Tracker"
 app.layout = html.Div(
     children=[
         html.Div(
