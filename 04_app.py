@@ -26,7 +26,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 # Imports
 # ======================================================================
 """
-
 from IPython.core.display import display
 import os
 import sys
@@ -57,20 +56,18 @@ from bootstrap import *
 # ======================================================================
 """
 min_date = '2020-03-01'
-
 mysql_con, sql_svr_con = get_con(cfg['mysql'], cfg['sql_svr'])
 
-con = sql_svr_con
-sql = f"select * from covid19_us_mds"
-df = get_df_from_sql(sql, con)
-#df         = pd.read_csv('covid19_us_2020-04-17.csv')
+con     = sql_svr_con
+sql     = f"select * from covid19_us_mds"
+df      = get_df_from_sql(sql, con)
+#df      = pd.read_csv('covid19_us_2020-04-17.csv')
 df['date'] = df['date'].astype('datetime64[ns]')
-df = df[df['date'] >= min_date]
+df      = df[df['date'] >= min_date]
 
 rcnt_dt = df['date'].max().date()
-states = sorted(df['state'].unique())
-towns = sorted(df['town'].unique())
-
+states  = sorted(df['state'].unique())
+towns   = sorted(df['town'].unique())
 df_rcnt = df[df['date'] == rcnt_dt]
 
 """
@@ -85,12 +82,12 @@ tab_dict = {
     'tab_data':    f"Data",
 }
 
-dim_desc = ['States', 'County/Town', 'Date']
-dim_cols = ['state',  'town',        'date']
-view_desc = ['US', 'State', 'County']
-views = ['us', 'state', 'town']
-view_cuts = ['state', 'town', '']
-view_color_col = ['', 'state', 'town']
+dim_desc        = ['States',  'County/Town',  'Date']
+dim_cols        = ['state',   'town',         'date']
+view_desc       = ['US',      'State',        'County']
+views           = ['us',      'state',        'town']
+view_cuts       = ['state',   'town',         '']
+view_color_col  = ['',        'state',        'town']
 
 measure_cols = [
     'population',
@@ -126,12 +123,12 @@ state_measure_cols = [
     'deaths',
 ]
 
-dim_dict = dict(zip(dim_cols, dim_desc))
+dim_dict      = dict(zip(dim_cols, dim_desc))
 measures_dict = dict(zip(measure_cols, measure_desc))
-views_dict = dict(zip(views, view_desc))
-views_color = dict(zip(views, view_color_col))
-view_cuts = dict(zip(views, view_cuts))
-states_dict = dict(zip(states, states))
+views_dict    = dict(zip(views, view_desc))
+views_color   = dict(zip(views, view_color_col))
+view_cuts     = dict(zip(views, view_cuts))
+states_dict   = dict(zip(states, states))
 
 town_measure_cols = measure_cols
 cols = dim_cols + measure_cols
@@ -150,8 +147,6 @@ def_town = 'Middlesex, Massachusetts, US'
 # Get mark-down content for summary tab
 # ======================================================================
 """
-
-
 def get_md(df, df_rcnt):
     if (len(df) == 0 or len(df_rcnt) == 0):
         (min_date, max_date) = ('NA', 'NA')
@@ -225,8 +220,6 @@ def get_md(df, df_rcnt):
 # Get tab contents
 # ======================================================================
 """
-
-
 def get_tab_contents(
     view,
     state,
@@ -240,26 +233,25 @@ def get_tab_contents(
     # =======================================================================
     # Defaults
     # =======================================================================
-    if (cb_list == None):
-        cb_list = ['None']
-    if (metric == None):
-        metric = 'incidence'
+    if (cb_list == None): cb_list = ['None']
+    if (metric == None):  metric = 'incidence'
 
     try:
         # =======================================================================
         # Initializations
         # =======================================================================
-        md_txt, top_fig, trend_fig, tab_data, modal_txt = "Empty", None, None, df_rcnt[:100], ""
+        md_txt,   top_fig,  trend_fig,  tab_data,       modal_txt = \
+        "Empty",  None,     None,       df_rcnt[:100],  ""
 
         # =======================================================================
         # Gather data
         # =======================================================================
-        df_all = df
-        df_st = df[df['state'] == state]
-        df_sts = df[(df['state']).isin(cb_list)]
-        df_towns = df[
-            (df['state'] == state) &
-            (df['town']).isin(cb_list)
+        df_all    = df
+        df_st     = df[df['state'] == state]
+        df_sts    = df[(df['state']).isin(cb_list)]
+        df_towns  = df[
+          (df['state'] == state) &
+          (df['town']).isin(cb_list)
         ]
 
         if (view == 'us'):       df_md, df_top, df_trend = df_all, df_all, df_all
@@ -280,10 +272,14 @@ def get_tab_contents(
         if (view != 'town'):
             viz_type = 'top'
             df_plt_top = get_rlvt_data(
-                df_top_curr, viz_type, view, metric, cb_list)
-            top_fig = px.bar(df_plt_top, orientation='h',
-                             x=metric, y=view_cuts[view], 
-                             height=600, text=metric)
+                df_top_curr,  viz_type, 
+                view, metric, cb_list
+            )
+            top_fig = px.bar(
+              df_plt_top, orientation='h',
+              x=metric,   y=view_cuts[view], 
+              height=600, text=metric
+            )
             top_fig.update_traces(texttemplate='%{text:.2s}', textposition='outside')
             top_fig.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')                            
         else:
@@ -300,19 +296,21 @@ def get_tab_contents(
             df_plt_trend['type'] = 'actual'
             df_pred['type'] = 'predicted'
             df_plt_trend = df_plt_trend.append(df_pred)
-            trend_fig = px.line(df_plt_trend, x='date',
-                                y=metric, height=600, color='type',
-                                )
+            trend_fig = px.line(
+              df_plt_trend, x='date', y=metric, 
+              height=600, color='type',
+            )
         else:
             if (view == 'us'):
-                trend_fig = px.line(df_plt_trend, x='date',
-                                    y=metric, height=600,                                    
-                                    )
+                trend_fig = px.line(
+                  df_plt_trend, x='date',
+                  y=metric, height=600,                                    
+                )
             else:
                 trend_fig = px.line(
-                    df_plt_trend, x='date', y=metric, 
-                    height=600, color=views_color[view],
-                    )
+                  df_plt_trend, x='date', y=metric, 
+                  height=600, color=views_color[view],
+                )
         
         if (modal_cls_btn_clcks > 0):
             modal_txt = ""
@@ -323,14 +321,11 @@ def get_tab_contents(
     finally:
         return (md_txt, top_fig, trend_fig, tab_data, modal_txt)
 
-
 """
 # ======================================================================
 # Boiler plate for a generic tab
 # ======================================================================
 """
-
-
 def get_tab(tab_type, name, init_val):
 
     p_str = f"""
@@ -371,8 +366,6 @@ def get_tab(tab_type, name, init_val):
                 page_current=0,
                 page_size=10,
                 page_action='custom',
-                #filter_action='native',
-                #sort_action='native',
                 style_data_conditional=[{
                   'if': {'row_index': 'odd'},
                   'backgroundColor': 'rgb(248,248,248)',
@@ -409,9 +402,11 @@ def get_tab(tab_type, name, init_val):
 # summarize_df - summarize data
 # ======================================================================
 """
-
-
-def summarize_df(df, metric, group_by_cols):
+def summarize_df(
+  df, 
+  metric, 
+  group_by_cols
+):
     avg_metrics = ['incidence_inc_pct', 'incidence_rate_pct', 'death_rate_pct']
     sum_metrics = ['population', 'incidence', 'incidence_inc', 'deaths']
 
@@ -425,14 +420,11 @@ def summarize_df(df, metric, group_by_cols):
 
     return df_out
 
-
 """
 # ======================================================================
 # Helper function - get relevant data
 # ======================================================================
 """
-
-
 def get_rlvt_data(
     df,
     viz_type,
@@ -480,14 +472,11 @@ def get_rlvt_data(
 
     return df_out
 
-
 """
 # ======================================================================
 # Prep main layout - tabs
 # ======================================================================
 """
-
-
 def get_tabs():
     def_smry_txt, def_top_fig, \
     def_trend_fig, tab_data, modal_txt = get_tab_contents(
@@ -518,8 +507,6 @@ def get_tabs():
 # get_cntrl_comp():
 # ======================================================================
 """
-
-
 def get_cntrl_comp(
     cntrl,
     name,
@@ -629,14 +616,11 @@ def get_cntrl_comp(
 
     return comp
 
-
 """
 # ======================================================================
 # get_controls
 # ======================================================================
 """
-
-
 def get_controls():
     # Define styles
     in_line = 'in-line block'
@@ -651,11 +635,15 @@ def get_controls():
     comps.append(get_cntrl_comp(dcc.RadioItems,  'metric',  measure_cols,   measures_dict, block))
     comps.append(get_cntrl_comp(html.Button,     'predict', blank,          blank,         in_line))
     comps.append(get_cntrl_comp(dcc.Markdown,    blank,     blank,          blank,         block))
-    #comps.append(get_cntrl_comp('save_state',    'sv_df',   blank,          blank,         block))
 
     return comps
 
 
+"""
+# ======================================================================
+# get_modal
+# ======================================================================
+"""
 def get_modal():
     comp = html.Div(
         style={'textAlign': 'center', },
@@ -667,7 +655,6 @@ def get_modal():
         ]
     )
     return comp
-
 
 """
 # ======================================================================
@@ -703,8 +690,6 @@ app.layout = html.Div(
 # get_disp_cntrl(disp_vec):
 # ======================================================================
 """
-
-
 def get_disp_cntrl(disp_vec):
     """
     # ======================================================================
@@ -729,30 +714,27 @@ def get_disp_cntrl(disp_vec):
         get_yes_no(disp_vec[3])
     ]
 
-
 """
 # ======================================================================
 # Component control (based on tab)
 # ======================================================================
 """
-
-
 @app.callback(
-    [
-        Output('st_dd_comp',      'style'),
-        Output('chk_bx_comp',     'style'),
-        Output('metric_comp',     'style'),
-        Output('predict_comp',    'style'),
+  [
+      Output('st_dd_comp',      'style'),
+      Output('chk_bx_comp',     'style'),
+      Output('metric_comp',     'style'),
+      Output('predict_comp',    'style'),
 
-        Output('chk_bx_cntrl',    'options'),
-        Output('view_cntrl',      'options')
-    ],
-    [
-        Input('tabs',             'value'),
-        Input('view_cntrl',       'value'),
-        Input('st_dd_cntrl',      'value'),
-        Input('chk_bx_cntrl',     'value'),
-    ]
+      Output('chk_bx_cntrl',    'options'),
+      Output('view_cntrl',      'options')
+  ],
+  [
+      Input('tabs',             'value'),
+      Input('view_cntrl',       'value'),
+      Input('st_dd_cntrl',      'value'),
+      Input('chk_bx_cntrl',     'value'),
+  ]
 )
 def comp_cntrl_cb(
     tab,
@@ -839,33 +821,33 @@ def comp_cntrl_cb(
 # ======================================================================
 """
 @app.callback(
-    [
-        Output('tab_smry_md',         'children'),
-        Output('tab_top_fig',         'figure'),
-        Output('tab_trends_fig',      'figure'),
-        Output('tab_data_dat_tbl',    'columns'),
-        Output('tab_data_dat_tbl',    'data'),
+  [
+      Output('tab_smry_md',         'children'),
+      Output('tab_top_fig',         'figure'),
+      Output('tab_trends_fig',      'figure'),
+      Output('tab_data_dat_tbl',    'columns'),
+      Output('tab_data_dat_tbl',    'data'),
 
-        Output('modal_comp',          'style'),
-        Output('modal_cntrl',         'children'),
-    ],
-    [
-        Input('view_cntrl',           'value'),
-        Input('st_dd_cntrl',          'value'),
+      Output('modal_comp',          'style'),
+      Output('modal_cntrl',         'children'),
+  ],
+  [
+      Input('view_cntrl',           'value'),
+      Input('st_dd_cntrl',          'value'),
 
-        Input('chk_bx_cntrl',         'value'),
-        Input('metric_cntrl',         'value'),
+      Input('chk_bx_cntrl',         'value'),
+      Input('metric_cntrl',         'value'),
 
-        Input('tab_top_fig_store',    'data'),
-        Input('tab_trends_fig_store', 'data'),
+      Input('tab_top_fig_store',    'data'),
+      Input('tab_trends_fig_store', 'data'),
 
-        Input('predict_cntrl',        'n_clicks'),
-        #Input('clr_predict_cntrl',    'n_clicks'),
-        Input('modal_close_button',   'n_clicks'),
+      Input('predict_cntrl',        'n_clicks'),
+      #Input('clr_predict_cntrl',    'n_clicks'),
+      Input('modal_close_button',   'n_clicks'),
 
-        Input('tab_data_dat_tbl', 'page_current'),
-        Input('tab_data_dat_tbl', 'page_size'),
-    ]
+      Input('tab_data_dat_tbl', 'page_current'),
+      Input('tab_data_dat_tbl', 'page_size'),
+  ]
 )
 def md_contents_cb(
   view,
@@ -910,8 +892,8 @@ def md_contents_cb(
       predict_btn_clcks, modal_cls_btn_clcks,
     )
 
-    if (top_fig == None):   top_fig = def_top_fig
-    if (trend_fig == None): trend_fig = def_trend_fig
+    if (top_fig == None):   top_fig     = def_top_fig
+    if (trend_fig == None): trend_fig   = def_trend_fig
     if (modal_txt != ""):   modal_style = {'display': 'block'}
     
     col_fmt = dft.Format(
