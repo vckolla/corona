@@ -96,17 +96,21 @@ measure_cols = [
     'incidence_inc_pct',
     'incidence_rate_pct',
     'deaths',
-    'death_rate_pct'
+    'death_rate_pct',
+    'deaths_inc',
+    'death_inc_pct',
 ]
 
 measure_desc = [
     'Population ',
     'Incidence (Counts) ',
-    'Incidence increase over previous day ',
-    'Pct. Incidence increase over previous day ',
+    'New Incidences ',
+    'Pct. New Incidences',
     'Incidence rate (Incid/100K pop) ',
     'Deaths (Counts) ',
-    'Death Rate Pct (Deaths/Incid) '
+    'Death Rate Pct (Deaths/Incid) ',
+    'New Deaths',
+    'Pct. New Deaths',
 ]
 
 us_measure_cols = [
@@ -114,6 +118,7 @@ us_measure_cols = [
     'incidence',
     'incidence_inc',
     'deaths',
+    'deaths_inc',
 ]
 
 state_measure_cols = [
@@ -121,6 +126,7 @@ state_measure_cols = [
     'incidence',
     'incidence_inc',
     'deaths',
+    'deaths_inc',
 ]
 
 dim_dict      = dict(zip(dim_cols, dim_desc))
@@ -153,27 +159,28 @@ def get_md(df, df_rcnt):
         (
             days,       num_states, states,     towns,
             num_towns,  population, cum_incids, incid_rate,
-            incid_inc,  cum_deaths, death_rate
+            incid_inc,  cum_deaths, death_rate, deaths_inc,
         ) = \
             (
             0, 0, 0, 0,
             0, 0, 0, 0,
-            0, 0, 0
+            0, 0, 0, 0
         )
     else:
-        min_date = df['date'].min().date()
-        max_date = df['date'].max().date()
-        days = len(df['date'].unique())
-        num_states = len(df['state'].unique())
-        states = sorted(df['state'].unique())
-        towns = sorted(df['town'].unique())
-        num_towns = len(df['town'].unique())
-        population = df_rcnt['population'].sum()
-        cum_incids = df_rcnt['incidence'].sum()
-        incid_rate = (cum_incids) / (population/100000)
-        incid_inc = df_rcnt['incidence_inc'].sum()
-        cum_deaths = df_rcnt['deaths'].sum()
-        death_rate = (cum_deaths * 100) / cum_incids
+        min_date    = df['date'].min().date()
+        max_date    = df['date'].max().date()
+        days        = len(df['date'].unique())
+        num_states  = len(df['state'].unique())
+        states      = sorted(df['state'].unique())
+        towns       = sorted(df['town'].unique())
+        num_towns   = len(df['town'].unique())
+        population  = df_rcnt['population'].sum()
+        cum_incids  = df_rcnt['incidence'].sum()
+        incid_rate  = (cum_incids) / (population/100000)
+        incid_inc   = df_rcnt['incidence_inc'].sum()
+        cum_deaths  = df_rcnt['deaths'].sum()
+        death_rate  = (cum_deaths * 100) / cum_incids
+        deaths_inc  = df_rcnt['deaths_inc'].sum()
 
     md_txt = f"""
   ---
@@ -196,9 +203,10 @@ def get_md(df, df_rcnt):
   | *Population:*             || **{population:,.0f}**  |
   | *Cumulative Incidents:*   || **{cum_incids:,.0f}**  |
   | *Incidents /100K:*        || **{incid_rate:,.2f}**  |
-  | *Incidents increase (from prior day):* || **{incid_inc:,.0f}**  |
+  | *New incidents:*          || **{incid_inc:,.0f}**   |
   | *Cumulative Deaths:*      || **{cum_deaths:,.0f}**  |
   | *Death rate (pct):*       || **{death_rate:,.2f}**  |
+  | *New deaths:*             || **{deaths_inc:,.0f}**   |
 
   ---
   
@@ -407,8 +415,8 @@ def summarize_df(
   metric, 
   group_by_cols
 ):
-    avg_metrics = ['incidence_inc_pct', 'incidence_rate_pct', 'death_rate_pct']
-    sum_metrics = ['population', 'incidence', 'incidence_inc', 'deaths']
+    avg_metrics = ['incidence_inc_pct', 'incidence_rate_pct', 'death_rate_pct', 'death_inc_pct']
+    sum_metrics = ['population', 'incidence', 'incidence_inc', 'deaths', 'deaths_inc']
 
     if (metric in avg_metrics):
         df_out = round(df.groupby(group_by_cols)[metric].agg('mean'), 2)

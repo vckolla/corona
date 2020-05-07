@@ -26,21 +26,22 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 # Imports
 # ======================================================================
 """
-from IPython.core.display import display
-import os
-import sys
-import pandas               as pd
-import traceback
-import dash_table
-import dash_table.FormatTemplate as dft
-import dash
-import dash_core_components as dcc
-import dash_bootstrap_components as dbc
-import dash_html_components as html
-import plotly.express       as px
-from   dash.dependencies    import Input, Output
-from   dash_table.Format    import Format, Scheme, Sign, Symbol
-from lstm                 import *
+import  dash_table.FormatTemplate    as dft
+import  dash_core_components         as dcc
+import  dash_bootstrap_components    as dbc
+import  dash_html_components         as html
+import  plotly.express               as px
+import  pandas                       as pd
+import  dash
+import  dash_table
+
+import  os
+import  sys
+import  traceback
+
+from    dash.dependencies           import Input, Output
+from    dash_table.Format           import Format, Scheme, Sign, Symbol
+from    lstm                        import *
 TOP = r"C:/Users/vishk/Desktop/WIP/2020/2020 Q1/07 - Self Learning"
 sys.path.append(f"{TOP}/lib")
 os.environ["TOP"] = TOP
@@ -48,7 +49,6 @@ os.environ["TOP"] = TOP
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=DeprecationWarning)
-
 from bootstrap import *
 
 """
@@ -387,12 +387,12 @@ def get_tab(tab_type, name, init_val):
         ]
 
     # Define tab
-    tab = dcc.Tab(
-        value=name,
-        label=tab_dict[name],
-        className="custom-tab",
-        selected_className="custom-tab--selected",
-        children=child_comp,
+    tab = dbc.Tab(
+        tab_id      =   name,
+        label       =   tab_dict[name],
+        children    =   child_comp,
+        #className   =   "custom-tab",
+        #selected_className="custom-tab--selected",
     )
 
     return tab
@@ -494,8 +494,8 @@ def get_tabs():
     tabs_content = [
         dcc.Tabs(
             id                = 'tabs',
-            value             = 'tab_smry',
-            parent_className  = 'custom-tabs',
+            active_tab        = 'tab_smry',
+            #parent_className  = 'custom-tabs',
             children          = tabs,
         )
     ]
@@ -657,10 +657,8 @@ def get_modal():
 # Define app
 # ======================================================================
 """
-#BS = "https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
-BS = "https://stackpath.bootstrapcdn.com/bootswatch/4.4.1/lux/bootstrap.min.css"
-#app = dash.Dash()
-app = dash.Dash(external_stylesheets=[BS])
+bs = "https://stackpath.bootstrapcdn.com/bootswatch/4.4.1/lux/bootstrap.min.css"
+app = dash.Dash(external_stylesheets=[bs])
 app.config.suppress_callback_exceptions = True
 app.title = "Me:dha:.ai US COVID19 Tracker"
 app.layout = html.Div(
@@ -848,7 +846,6 @@ def comp_cntrl_cb(
         tab_comp_class_name, cntrl_comp_style,
         show_hide_val,
     )
-
 
 """
 # ======================================================================

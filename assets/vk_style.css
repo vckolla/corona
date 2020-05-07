@@ -19,7 +19,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .app_right {
-  width:            34%;
+  width:            32%;
   display:          inline-block;
   vertical-align:   top;
   padding:          5px;
@@ -30,8 +30,20 @@ h1, h2, h3, h4, h5, h6 {
   background-color: rgba(234,234,234);
 }
 
+.app_mini {
+  width:            2%;
+  display:          inline-block;
+  vertical-align:   top;
+  text-align:       center;
+  align-content:    center;
+  height:           700px;
+  font:             "Century Gothic";
+  color:            rgba(255,255,255);
+  background-color: rgba(0,0,0);
+}
+
 .app_full {
-  width:            99%;
+  width:            96%;
   display:          inline-block;
   vertical-align:   top;
   padding:          5px;

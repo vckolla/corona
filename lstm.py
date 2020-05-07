@@ -173,7 +173,7 @@ def get_lstm_rslts(df_in, metric):
     """run_all - orchestrator
     """
     # number of periods in hold-out
-    n_test = 7
+    n_test = 14
 
     # n_inputs, n_nodes, n_epochs, n_batch, n_diff
     config = [1, 50, 200, 5, 0]
